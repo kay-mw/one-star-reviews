@@ -27,8 +27,10 @@ let
     shellHook = ''
       # Allow the use of wheels.
       SOURCE_DATE_EPOCH=$(date +%s)
+
       # Augment the dynamic linker path
       export "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${lib-path}:${pkgs.stdenv.cc.cc.lib}/lib"
+
       # Setup the virtual environment if it doesn't already exist.
       VENV=.venv
       if test ! -d $VENV; then
@@ -36,6 +38,8 @@ let
       fi
       source ./$VENV/bin/activate
       export PYTHONPATH=$PYTHONPATH:`pwd`/$VENV/${myPython.sitePackages}/
+
+      export SPARK_LOCAL_DIRS=/home/kiran/spark
 
       zsh
     '';

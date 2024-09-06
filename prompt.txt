@@ -1,0 +1,47 @@
+[TASK]
+Analyze product reviews and provide evaluations in JSON format.
+
+[EVALUATION CRITERIA]
+For each review, evaluate based on:
+1. Informativeness (1-5): How detailed and useful is the information?
+2. Objectivity (1-5): How factual and unbiased is the review?
+3. Key Points: Main claims or observations (up to 3)
+4. Relevance: How relevant is the review to the product? (High/Medium/Low)
+5. Overall Quality (1-10): Considering all factors, rate the overall usefulness
+
+[OUTPUT FORMAT]
+Provide your evaluation in the following JSON format:
+
+{
+  "review_id": {
+    "informativeness": 1-5,
+    "objectivity": 1-5,
+    "key_points": "Point 1; Point 2; Point 3",
+    "relevance": "High/Medium/Low",
+    "score": 1-10
+  }
+}
+
+[EXAMPLE]
+Here's an example of a correctly formatted output:
+
+{
+  "123456": {
+    "informativeness": 4,
+    "objectivity": 3,
+    "key_points": "Durable construction; Comfortable fit; Runs small",
+    "relevance": "High",
+    "score": 8
+  }
+}
+
+[INSTRUCTIONS]
+1. Analyze each review provided.
+2. Use the evaluation criteria to assess the review.
+3. Format your response as valid JSON following the output format.
+4. You may provide a brief introduction before the JSON block if needed.
+5. Ensure all JSON is properly formatted and valid.
+
+Now, please proceed with analyzing the reviews and providing your evaluation in JSON format.
+
+[REVIEW DATA]
