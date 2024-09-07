@@ -113,24 +113,24 @@ def analyse_reviews(context: str):
 
 inner_schema = StructType(
     [
-        StructField("informativeness", IntegerType(), True),
-        StructField("objectivity", IntegerType(), True),
-        StructField("key_points", StringType(), True),
-        StructField("relevance", StringType(), True),
-        StructField("score", IntegerType(), True),
+        StructField("informativeness", IntegerType(), False),
+        StructField("objectivity", IntegerType(), False),
+        StructField("key_points", StringType(), False),
+        StructField("relevance", StringType(), False),
+        StructField("score", IntegerType(), False),
     ]
 )
 
 schema = MapType(StringType(), inner_schema)
 
-df_generator = extract_data(size=10)
+df_generator = extract_data(size=20)
 for df in df_generator:
     df.cache()
     json_df = df.toJSON().collect()
     json_df = [json.loads(x) for x in json_df]
     json_df = json.dumps(json_df)
     response = analyse_reviews(context=json_df)
-    df.unpersist()
+
     response_df = spark.createDataFrame([response], schema=schema)
     response_df = response_df.selectExpr("explode(value) as (id, details)")
     response_df = response_df.select(
@@ -140,7 +140,13 @@ for df in df_generator:
         "details.key_points",
         "details.relevance",
         "details.score",
-    )
-    response_df.cache()
-    response_df.show()
+    ).cache()
+
+    final_df = df.join(response_df, df["review_id"] == response_df["id"])
+    final_df.cache()
+    final_df.show(truncate=100, vertical=True)
+    # final_df.groupBy("rating").mean("score").show()
+
+    final_df.unpersist()
     response_df.unpersist()
+    df.unpersist()
