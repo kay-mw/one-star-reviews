@@ -1,4 +1,6 @@
 .venv
-product_data
-review_data
+product_data/
+review_data/
 .env
+export/
+*.log

@@ -1,0 +1,101 @@
+Dataframes: All_Beauty.jsonl.gz, meta_All_Beauty.jsonl.gz
+Count: 701528
+
+Dataframes: Amazon_Fashion.jsonl.gz, meta_Amazon_Fashion.jsonl.gz
+Count: 2500939
+
+Dataframes: Appliances.jsonl.gz, meta_Appliances.jsonl.gz
+Count: 2128605
+
+Dataframes: Arts_Crafts_and_Sewing.jsonl.gz, meta_Arts_Crafts_and_Sewing.jsonl.gz
+Count: 8966758
+
+Dataframes: Automotive.jsonl.gz, meta_Automotive.jsonl.gz
+Count: 19955450
+
+Dataframes: Baby_Products.jsonl.gz, meta_Baby_Products.jsonl.gz
+Count: 6028884
+
+Dataframes: Beauty_and_Personal_Care.jsonl.gz, meta_Beauty_and_Personal_Care.jsonl.gz
+Count: 23911390
+
+Dataframes: Books.jsonl.gz, meta_Books.jsonl.gz
+Count: 29475453
+
+Dataframes: CDs_and_Vinyl.jsonl.gz, meta_CDs_and_Vinyl.jsonl.gz
+Count: 4827273
+
+Dataframes: Cell_Phones_and_Accessories.jsonl.gz, meta_Cell_Phones_and_Accessories.jsonl.gz
+Count: 20812945
+
+Dataframes: Clothing_Shoes_and_Jewelry.jsonl.gz, meta_Clothing_Shoes_and_Jewelry.jsonl.gz
+Count: 66033346
+
+Dataframes: Digital_Music.jsonl.gz, meta_Digital_Music.jsonl.gz
+Count: 130434
+
+Dataframes: Electronics.jsonl.gz, meta_Electronics.jsonl.gz
+Count: 43886944
+
+Dataframes: Gift_Cards.jsonl.gz, meta_Gift_Cards.jsonl.gz
+Count: 152410
+
+Dataframes: Grocery_and_Gourmet_Food.jsonl.gz, meta_Grocery_and_Gourmet_Food.jsonl.gz
+Count: 14318520
+
+Dataframes: Handmade_Products.jsonl.gz, meta_Handmade_Products.jsonl.gz
+Count: 664162
+
+Dataframes: Health_and_Household.jsonl.gz, meta_Health_and_Household.jsonl.gz
+Count: 25631345
+
+Dataframes: Health_and_Personal_Care.jsonl.gz, meta_Health_and_Personal_Care.jsonl.gz
+Count: 494121
+
+Dataframes: Home_and_Kitchen.jsonl.gz, meta_Home_and_Kitchen.jsonl.gz
+Count: 67409944
+
+Dataframes: Industrial_and_Scientific.jsonl.gz, meta_Industrial_and_Scientific.jsonl.gz
+Count: 5183005
+
+Dataframes: Kindle_Store.jsonl.gz, meta_Kindle_Store.jsonl.gz
+Count: 25577616
+
+Dataframes: Magazine_Subscriptions.jsonl.gz, meta_Magazine_Subscriptions.jsonl.gz
+Count: 71497
+
+Dataframes: Movies_and_TV.jsonl.gz, meta_Movies_and_TV.jsonl.gz
+Count: 17328314
+
+Dataframes: Musical_Instruments.jsonl.gz, meta_Musical_Instruments.jsonl.gz
+Count: 3017439
+
+Dataframes: Office_Products.jsonl.gz, meta_Office_Products.jsonl.gz
+Count: 12845712
+
+Dataframes: Patio_Lawn_and_Garden.jsonl.gz, meta_Patio_Lawn_and_Garden.jsonl.gz
+Count: 16490047
+
+Dataframes: Pet_Supplies.jsonl.gz, meta_Pet_Supplies.jsonl.gz
+Count: 16827862
+
+Dataframes: Software.jsonl.gz, meta_Software.jsonl.gz
+Count: 4880181
+
+Dataframes: Sports_and_Outdoors.jsonl.gz, meta_Sports_and_Outdoors.jsonl.gz
+Count: 19595170
+
+Dataframes: Subscription_Boxes.jsonl.gz, meta_Subscription_Boxes.jsonl.gz
+Count: 16216
+
+Dataframes: Tools_and_Home_Improvement.jsonl.gz, meta_Tools_and_Home_Improvement.jsonl.gz
+Count: 26982256
+
+Dataframes: Toys_and_Games.jsonl.gz, meta_Toys_and_Games.jsonl.gz
+Count: 16260406
+
+Dataframes: Unknown.jsonl.gz, meta_Unknown.jsonl.gz
+Count: 1181420
+
+Dataframes: Video_Games.jsonl.gz, meta_Video_Games.jsonl.gz
+Count: 4624615

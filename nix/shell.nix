@@ -19,10 +19,10 @@ let
   extraBuildInputs = with pythonPackages;
     [
       # pyodbc
-    ] ++ (with pkgs;
-      [
-        jdk # Pyspark
-      ]);
+    ] ++ (with pkgs; [
+      jdk # Pyspark
+      duckdb
+    ]);
 in import ./python-shell.nix {
   extraBuildInputs = extraBuildInputs;
   # extraLibPackages = extraLibPackages;

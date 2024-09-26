@@ -1,23 +1,42 @@
+import asyncio
 import json
+import logging
+import math
 import os
+import time
+from functools import reduce
 
+import google.generativeai as genai
 import pyspark
+import typing_extensions as typing
+from delta import *
 from dotenv import load_dotenv
-from groq import Groq
-from pyspark.sql import SparkSession, functions
-from pyspark.sql.types import (
-    ArrayType,
-    BooleanType,
-    FloatType,
-    IntegerType,
-    LongType,
-    MapType,
-    StringType,
-    StructField,
-    StructType,
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import broadcast, col, concat, monotonically_increasing_id
+from pyspark.sql.types import *
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="main.log", encoding="utf-8", filemode="w", level=logging.INFO
 )
 
-spark = SparkSession.builder.appName("one-star-reviews").getOrCreate()
+builder = (
+    SparkSession.builder.appName("one-star-reviews")
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+    .config(
+        "spark.sql.catalog.spark_catalog",
+        "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+    )
+    .config("spark.driver.memory", "8g")
+    .config("spark.executor.memory", "6g")
+    .config("spark.memory.offHeap.enabled", "true")
+    .config("spark.memory.offHeap.size", "2g")
+    .config("spark.sql.adaptive.coalescePartitions.enabled", "false")
+    .config("spark.sql.adaptive.enabled", "true")
+)
+
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
+
 
 PRODUCT_SCHEMA = StructType(
     [
@@ -51,102 +70,171 @@ REVIEW_SCHEMA = StructType(
         StructField("helpful_vote", IntegerType(), True),
     ]
 )
-
-
-review_files = sorted(os.listdir("./review_data/"))
-product_files = sorted(os.listdir("./product_data/"))
-
-
-def extract_data(size: int):
-    for i in range(len(review_files)):
-        review_df = spark.read.schema(REVIEW_SCHEMA).json(
-            f"review_data/{review_files[i]}"
-        )
-        review_df = review_df.drop("images")
-        review_df = review_df.withColumnRenamed(
-            "title", "review_title"
-        ).withColumnRenamed("text", "review_text")
-        review_df = review_df.withColumn(
-            "review_id", functions.monotonically_increasing_id()
-        )
-
-        product_df = spark.read.schema(PRODUCT_SCHEMA).json(
-            f"product_data/{product_files[i]}"
-        )
-        product_df = product_df.drop("images", "videos")
-        product_df = product_df.withColumnRenamed("title", "product_title")
-
-        df = review_df.join(product_df, ["parent_asin"])
-        df = df.limit(size)
-
-        yield df
-
-
-def analyse_reviews(context: str):
-    load_dotenv()
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
-
-    with open("./prompt.txt", "r") as file:
-        prompt = " ".join(line.rstrip() for line in file)
-        prompt = prompt + context
-
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an expert review analyzer who evalutes the quality and usefulness of product reviews in JSON.",
-                },
-                {"role": "user", "content": f"{prompt}"},
-            ],
-            model="llama-3.1-70b-versatile",
-            response_format={"type": "json_object"},
-        )
-
-    data = chat_completion.choices[0].message.content
-
-    assert data is not None
-
-    data = json.loads(data)
-
-    return data
-
-
-inner_schema = StructType(
+RESPONSE_SCHEMA = StructType(
     [
-        StructField("informativeness", IntegerType(), False),
-        StructField("objectivity", IntegerType(), False),
-        StructField("key_points", StringType(), False),
-        StructField("relevance", StringType(), False),
+        StructField("review_id", StringType(), False),
         StructField("score", IntegerType(), False),
     ]
 )
 
-schema = MapType(StringType(), inner_schema)
 
-df_generator = extract_data(size=20)
-for df in df_generator:
-    df.cache()
-    json_df = df.toJSON().collect()
-    json_df = [json.loads(x) for x in json_df]
-    json_df = json.dumps(json_df)
-    response = analyse_reviews(context=json_df)
+review_files = sorted(os.listdir("./review_data/"))
+product_files = sorted(os.listdir("./product_data/"))
+review_files = review_files[1:]
+product_files = product_files[1:]
 
-    response_df = spark.createDataFrame([response], schema=schema)
-    response_df = response_df.selectExpr("explode(value) as (id, details)")
-    response_df = response_df.select(
-        "id",
-        "details.informativeness",
-        "details.objectivity",
-        "details.key_points",
-        "details.relevance",
-        "details.score",
-    ).cache()
 
-    final_df = df.join(response_df, df["review_id"] == response_df["id"])
-    final_df.cache()
-    final_df.show(truncate=100, vertical=True)
-    # final_df.groupBy("rating").mean("score").show()
+class Reviews(typing.TypedDict):
+    review_id: str
+    score: int
 
-    final_df.unpersist()
+
+async def async_analyse_reviews(data: str):
+    load_dotenv()
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+    with open("./prompt.txt", "r") as file:
+        prompt = file.read()
+
+        model = genai.GenerativeModel(
+            "gemini-1.5-flash",
+            generation_config=genai.GenerationConfig(
+                response_mime_type="application/json",
+                response_schema=list[Reviews],
+                max_output_tokens=8192,
+            ),
+        )
+
+        try:
+            response = await model.generate_content_async(prompt + "\n" + data)
+            response = json.loads(response.text)
+            return response
+        except json.JSONDecodeError:
+            logger.info("Failed to parse response. Skipping.")
+
+
+def split_data(rows: int):
+    for i in range(len(review_files)):
+        logger.info(f"Processing {review_files[i]} and {product_files[i]}")
+        review_df = (
+            spark.read.schema(REVIEW_SCHEMA)
+            .json(f"./review_data/{review_files[i]}")
+            .drop(
+                "images",
+            )
+            .withColumnRenamed("title", "review_title")
+            .withColumnRenamed("text", "review_text")
+        )
+
+        product_df = (
+            spark.read.schema(PRODUCT_SCHEMA)
+            .json(f"./product_data/{product_files[i]}")
+            .drop(
+                "images",
+                "videos",
+                # "details",
+            )
+            .withColumnRenamed("title", "product_title")
+        )
+
+        df = review_df.join(product_df, ["parent_asin"])
+        df = (
+            df.limit(300000)
+            .withColumn("review_id", concat("timestamp", monotonically_increasing_id()))
+            .repartition("review_id")
+        )
+
+        n_splits = math.ceil(df.count() / rows)
+        fractions = [1.0] * n_splits
+
+        dfs = df.randomSplit(fractions, 1)
+
+        review_df.unpersist()
+        product_df.unpersist()
+        df.unpersist()
+
+        yield dfs
+
+
+def slice_data(rows: int, slices=15):
+    dfs_generator = split_data(rows)
+    for dfs in dfs_generator:
+        for i in range(len(dfs) // 14):
+            if i < 15:
+                continue
+            else:
+                lower = slices * i if i == 0 else (slices * i) + 1
+                upper = slices * (i + 1)
+
+                logger.info(f"Processing dataframes {lower} - {upper}")
+                dfs_slice = dfs[lower:upper]
+
+                yield dfs_slice
+
+
+dfs_generator = slice_data(rows=150)
+for dfs in dfs_generator:
+    t0 = time.time()
+
+    async def main():
+        tasks = []
+        for df in dfs:
+            llm_df = df.drop(
+                "parent_asin",
+                "asin",
+                "user_id",
+                "verified_purchase",
+                "helpful_vote",
+                "bought_together",
+                "details",
+                "categories",
+                "store",
+                "description",
+                "features",
+                "main_category",
+                "average_rating",
+                "rating_number",
+                "price",
+                "timestamp",
+            )
+
+            collection = llm_df.collect()
+            llm_dict = [row.asDict() for row in collection]
+            llm_str = json.dumps(llm_dict)
+
+            task = asyncio.create_task(async_analyse_reviews(llm_str))
+            tasks.append(task)
+
+            df.unpersist()
+            llm_df.unpersist()
+
+        responses = await asyncio.gather(*tasks)
+        return responses
+
+    responses = asyncio.run(main())
+
+    # dfs[0].orderBy("review_id").show(3)
+    # dfs[0].orderBy("review_id").select("review_id").show(3)
+
+    rdd = spark.sparkContext.parallelize(responses)
+    response_df = spark.read.schema(RESPONSE_SCHEMA).json(rdd)
+
+    all_dfs = reduce(DataFrame.union, dfs)
+
+    final_df = all_dfs.join(broadcast(response_df), "review_id", how="inner")
+    final_df = final_df.coalesce(1)
+    final_df.write.format("delta").mode("append").save("./export/delta-table")
+
+    logger.info(
+        f"""Exported final_df. Relevant row counts were...
+    all_dfs: {all_dfs.filter(col("review_id").isNotNull()).count()}
+    response_df: {response_df.filter(col("review_id").isNotNull()).count()}
+    final_df: {final_df.filter(col("review_id").isNotNull()).count()}"""
+    )
+    logger.info(f"Processed slice in {time.time() - t0} seconds.")
+
+    rdd.unpersist()
+    [df.unpersist() for df in dfs]
     response_df.unpersist()
-    df.unpersist()
+    all_dfs.unpersist()
+    final_df.unpersist()
