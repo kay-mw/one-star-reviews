@@ -31,8 +31,8 @@ builder = (
     .config("spark.executor.memory", "6g")
     .config("spark.memory.offHeap.enabled", "true")
     .config("spark.memory.offHeap.size", "2g")
-    .config("spark.sql.adaptive.coalescePartitions.enabled", "false")
     .config("spark.sql.adaptive.enabled", "true")
+    .config("spark.sql.adaptive.coalescePartitions.enabled", "false")
 )
 
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
@@ -124,6 +124,7 @@ def split_data(rows: int):
             )
             .withColumnRenamed("title", "review_title")
             .withColumnRenamed("text", "review_text")
+            .repartition("parent_asin")
         )
 
         product_df = (
@@ -135,11 +136,13 @@ def split_data(rows: int):
                 # "details",
             )
             .withColumnRenamed("title", "product_title")
+            .repartition("parent_asin")
         )
 
         df = review_df.join(product_df, ["parent_asin"])
         df = (
-            df.limit(300000)
+            df.cache()
+            .limit(300000)
             .withColumn("review_id", concat("timestamp", monotonically_increasing_id()))
             .repartition("review_id")
         )
@@ -156,25 +159,22 @@ def split_data(rows: int):
         yield dfs
 
 
-def slice_data(rows: int, slices=15):
+def slice_data(rows: int, slices=3):
     dfs_generator = split_data(rows)
     for dfs in dfs_generator:
         for i in range(len(dfs) // 14):
-            if i < 15:
-                continue
-            else:
-                lower = slices * i if i == 0 else (slices * i) + 1
-                upper = slices * (i + 1)
+            lower = slices * i if i == 0 else (slices * i) + 1
+            upper = slices * (i + 1)
 
-                logger.info(f"Processing dataframes {lower} - {upper}")
-                dfs_slice = dfs[lower:upper]
+            logger.info(f"Processing dataframes {lower} - {upper}")
+            dfs_slice = dfs[lower:upper]
 
-                yield dfs_slice
+            yield dfs_slice
 
 
 dfs_generator = slice_data(rows=150)
 for dfs in dfs_generator:
-    t0 = time.time()
+    tstart = time.time()
 
     async def main():
         tasks = []
@@ -196,7 +196,7 @@ for dfs in dfs_generator:
                 "rating_number",
                 "price",
                 "timestamp",
-            )
+            ).cache()
 
             collection = llm_df.collect()
             llm_dict = [row.asDict() for row in collection]
@@ -213,17 +213,17 @@ for dfs in dfs_generator:
 
     responses = asyncio.run(main())
 
-    # dfs[0].orderBy("review_id").show(3)
-    # dfs[0].orderBy("review_id").select("review_id").show(3)
-
+    t0 = time.time()
     rdd = spark.sparkContext.parallelize(responses)
-    response_df = spark.read.schema(RESPONSE_SCHEMA).json(rdd)
+    response_df = spark.read.schema(RESPONSE_SCHEMA).json(rdd).cache()
 
-    all_dfs = reduce(DataFrame.union, dfs)
+    all_dfs = reduce(DataFrame.union, dfs).cache()
 
     final_df = all_dfs.join(broadcast(response_df), "review_id", how="inner")
     final_df = final_df.coalesce(1)
     final_df.write.format("delta").mode("append").save("./export/delta-table")
+
+    logger.info(f"Final join and export of data took {time.time() - t0} seconds.")
 
     logger.info(
         f"""Exported final_df. Relevant row counts were...
@@ -231,7 +231,9 @@ for dfs in dfs_generator:
     response_df: {response_df.filter(col("review_id").isNotNull()).count()}
     final_df: {final_df.filter(col("review_id").isNotNull()).count()}"""
     )
-    logger.info(f"Processed slice in {time.time() - t0} seconds.")
+    logger.info(
+        f"Overall processing time for slice was {time.time() - tstart} seconds."
+    )
 
     rdd.unpersist()
     [df.unpersist() for df in dfs]
