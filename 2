@@ -259,13 +259,17 @@ SELECT
     score,
     datetime
 FROM reviews
+WHERE 
+    datetime 
+BETWEEN 
+    '2014-04-01 00:00:00+00' AND '2014-04-29 00:00:00+00'
 ORDER BY 
     score DESC
 LIMIT 
     100;
 """
 ).pl()
-with pl.Config(tbl_rows=-1, set_fmt_str_lengths=4000):
+with pl.Config(tbl_rows=-1):
     print(df)
 
 

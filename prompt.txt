@@ -8,7 +8,7 @@ useful the information is. 2. How factual and unbiased the review is. 3. How
 relevant the is review to the product.
 
 You will use these evaluation criteria to generate an overall quality rating,
-from 1-10. This represents how useful you consider the review, given the
+from 0-10. This represents how useful you consider the review, given the
 evaluation criterion above.
 
 [EVALUATION EXAMPLES] 
