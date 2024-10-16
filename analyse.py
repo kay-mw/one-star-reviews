@@ -56,8 +56,18 @@ WHERE
 """
 )
 
+m = duckdb.sql(
+    "SELECT review_title, review_text, timestamp, product_title FROM reviews WHERE rating = 5.0 AND score = 1 LIMIT 50;"
+).pl()
+with pl.Config(tbl_rows=-1, set_fmt_str_lengths=4000):
+    print(m)
+
 duckdb.sql("SELECT COUNT(*) FROM reviews;")
 duckdb.sql(f"SELECT COUNT(DISTINCT(timestamp)) FROM {review_table};")
+
+bruh = duckdb.sql("SELECT main_category FROM reviews GROUP BY main_category;").pl()
+with pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000):
+    print(bruh)
 
 score_by_category = duckdb.sql(
     """WITH rows AS (
