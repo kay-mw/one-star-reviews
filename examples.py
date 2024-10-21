@@ -25,8 +25,6 @@ for line in line_generator:
     base.append(timestamps)
 
 
-print(base)
-
 open("base.json", "w").close()
 with open("base.json", "a") as file:
     for b in base:

@@ -29,8 +29,8 @@ base_model = "models/gemini-1.5-flash-001-tuning"
 operation = genai.create_tuned_model(
     display_name="increment",
     source_model=base_model,
-    epoch_count=20,
-    batch_size=len(training_data),
+    epoch_count=15,
+    batch_size=4,
     learning_rate=0.001,
     training_data=training_data,
 )
@@ -41,8 +41,8 @@ for status in operation.wait_bar():
 result = operation.result()
 
 snapshots = pd.DataFrame(result.tuning_task.snapshots)
-fig = px.line(snapshots, x="epoch", y="mean_loss", template="plotly_dark")
+fig = px.scatter(snapshots, x="epoch", y="mean_loss", template="plotly_dark")
 fig.show()
 
 with open("finetune_names.txt", "a") as file:
-    file.write(f"Run 1: {result.name}" + "\n")
+    file.write(f"Run ?: {result.name}" + "\n")
