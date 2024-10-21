@@ -2,6 +2,8 @@ import os
 import time
 
 import google.generativeai as genai
+import pandas as pd
+import plotly.express as px
 from dotenv import load_dotenv
 from typing_extensions import Generator
 
@@ -37,4 +39,10 @@ for status in operation.wait_bar():
     time.sleep(10)
 
 result = operation.result()
-print(result)
+
+snapshots = pd.DataFrame(result.tuning_task.snapshots)
+fig = px.line(snapshots, x="epoch", y="mean_loss", template="plotly_dark")
+fig.show()
+
+with open("finetune_names.txt", "a") as file:
+    file.write(f"Run 1: {result.name}" + "\n")
