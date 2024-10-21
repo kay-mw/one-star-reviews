@@ -1,5 +1,5 @@
 { pkgs ? import (fetchTarball
-  "https://github.com/NixOS/nixpkgs/archive/4284c2b73c8bce4b46a6adf23e16d9e2ec8da4bb.tar.gz")
+  "https://github.com/NixOS/nixpkgs/archive/a3c0b3b21515f74fd2665903d4ce6bc4dc81c77c.tar.gz")
   { }, extraBuildInputs ? [ ], myPython ? pkgs.python3, extraLibPackages ? [ ]
 , pythonWithPkgs ? myPython }:
 
@@ -23,13 +23,14 @@ let
       pkgs.git
       pkgs.openssh
       pkgs.rsync
+
     ] ++ extraBuildInputs;
     shellHook = ''
       # Allow the use of wheels.
       SOURCE_DATE_EPOCH=$(date +%s)
 
       # Augment the dynamic linker path
-      export "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${lib-path}:${pkgs.stdenv.cc.cc.lib}/lib"
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${lib-path}:${pkgs.stdenv.cc.cc.lib}/lib
 
       # Setup the virtual environment if it doesn't already exist.
       VENV=.venv

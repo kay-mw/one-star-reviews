@@ -2,12 +2,19 @@ import duckdb
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import polars as pl
 from deltalake import DeltaTable
 from plotly.subplots import make_subplots
 
+import polars as pl
+
 review_table = "delta_scan('./export/delta-table/')"
 distinct_reviews = f"(SELECT DISTINCT(review_id) FROM {review_table})"
+
+pl.Config(tbl_rows=-1, set_fmt_str_lengths=1000)
+
+duckdb.sql(
+    f"SELECT bought_together FROM {review_table} WHERE bought_together IS NOT NULL;"
+).pl()
 
 duckdb.sql(
     f"""CREATE TABLE reviews AS
@@ -55,6 +62,10 @@ WHERE
     rn = 1;
 """
 )
+
+duckdb.sql(
+    "SELECT review_title, review_text FROM reviews WHERE score = 10 AND rating = 3.0;"
+).pl()
 
 m = duckdb.sql(
     "SELECT review_title, review_text, timestamp, product_title FROM reviews WHERE rating = 5.0 AND score = 1 LIMIT 50;"

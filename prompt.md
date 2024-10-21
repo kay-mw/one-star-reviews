@@ -64,6 +64,18 @@ Reviews should be evaluated based on:
 }
 ```
 
+This review would score a 10/10.
+
+- Detail: provides a detailed assessment of every key detail one would look for
+  when purchasing a telescope, including some useful buyers information
+  recarding sizes and eyepieces. Explains and justifies their claims.
+- Objectivity: focuses on the product, not their personal thoughts or feelings.
+  States things like "This is... the ideal scope for beginners", as opposed to
+  "I LOVE IT!" or "IT'S MY FAVOURITE!"
+- Relevance: perfect relevance, with a deep focus on telescopes - specifically
+  low price point beginner telescopes. You could not apply this review to any
+  product outside of this category.
+
 ### Low Quality Example
 
 ```
@@ -75,6 +87,15 @@ Reviews should be evaluated based on:
   "product_title": "Hypafix Retention Tape 2' X 10 Yard Roll Each"
 }
 ```
+
+This review would score a 0/10.
+
+- Detail: this review provides no relevant detail; just says "Great" and nothing
+  else.
+- Objectivity: no objectivity, just a personal statement about how the reviewer
+  feels: "Great".
+- Relevance: no relevance to the product. This review could be applied to any
+  product on Amazon.
 
 # Negative Reviews
 
@@ -99,6 +120,18 @@ Reviews should be evaluated based on:
 }
 ```
 
+This review would score a 10/10.
+
+- Detail: an almost scientific level of detail regarding specific measurements,
+  quantities, and experiments, with fantastic justifications for the relevance
+  of these factors.
+- Objectivity: perfectly objective. The review discusses nothing other than the
+  quality of the product, as measured by experiments and unbiased quantitative
+  testing.
+- Relevance: incredibly relevant. It is abundantly clear the reviewer is talking
+  specifically about Tianeptine sulfate, you could not apply this to any other
+  product.
+
 ### Low Quality Review
 
 ```
@@ -113,6 +146,15 @@ Reviews should be evaluated based on:
 }
 ```
 
+This review would score a 0/10.
+
+- Detail: no detail at all. Just ad-hominem attacks towards the product with
+  zero justification, reasoning, or explanation.
+- Objectivity: the antithesis of objectivity. Emotive language, a manic tone,
+  and a complete lack of any unbiased analysis of the products
+  benefits/shortcomings.
+- Relevance: zero relevance. The review could be applied to any product.
+
 <INSTRUCTIONS>
 
 1. Analyze each review provided.
@@ -123,10 +165,10 @@ Reviews should be evaluated based on:
 
 The schema of the review data attached to this prompt is as follows:
 
-- "rating": the star rating of the review, ranging from 1-5. (FLOAT)
 - "review_title": the title of the review. (STRING)
 - "review_text": the actual contents/text of the review. (STRING)
 - "timestamp": the unique identifier of each review. (INTEGER)
+- "rating": the star rating of the review, ranging from 1-5. (FLOAT)
 - "product_title": the title of the product being reviewed. (STRING)
 
 <REVIEW-DATA>

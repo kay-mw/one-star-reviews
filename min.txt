@@ -1,0 +1,136 @@
+10/17/2024 05:11:25: INFO - Processing All_Beauty.jsonl.gz, meta_All_Beauty.jsonl.gz...
+10/17/2024 05:11:25: INFO - Sample seed is 1.
+10/17/2024 05:11:33: INFO - Sample row count is 100.
+10/17/2024 05:11:35: INFO - Overall processing time for slice was 10.178627252578735 seconds.
+10/17/2024 05:11:35: INFO - Processing Amazon_Fashion.jsonl.gz, meta_Amazon_Fashion.jsonl.gz...
+10/17/2024 05:11:35: INFO - Sample seed is 1.
+10/17/2024 05:11:52: INFO - Sample row count is 115.
+10/17/2024 05:12:00: INFO - Overall processing time for slice was 25.188597202301025 seconds.
+10/17/2024 05:12:00: INFO - Processing Appliances.jsonl.gz, meta_Appliances.jsonl.gz...
+10/17/2024 05:12:00: INFO - Sample seed is 1.
+10/17/2024 05:12:14: INFO - Sample row count is 111.
+10/17/2024 05:12:21: INFO - Overall processing time for slice was 20.36009645462036 seconds.
+10/17/2024 05:12:21: INFO - Processing Arts_Crafts_and_Sewing.jsonl.gz, meta_Arts_Crafts_and_Sewing.jsonl.gz...
+10/17/2024 05:12:21: INFO - Sample seed is 1.
+10/17/2024 05:13:19: INFO - Sample row count is 98.
+10/17/2024 05:13:47: INFO - Overall processing time for slice was 85.95095086097717 seconds.
+10/17/2024 05:13:47: INFO - Processing Automotive.jsonl.gz, meta_Automotive.jsonl.gz...
+10/17/2024 05:13:47: INFO - Sample seed is 1.
+10/17/2024 05:15:54: INFO - Sample row count is 116.
+10/17/2024 05:16:57: INFO - Overall processing time for slice was 190.48775815963745 seconds.
+10/17/2024 05:16:57: INFO - Processing Baby_Products.jsonl.gz, meta_Baby_Products.jsonl.gz...
+10/17/2024 05:16:57: INFO - Sample seed is 1.
+10/17/2024 05:17:37: INFO - Sample row count is 90.
+10/17/2024 05:17:57: INFO - Overall processing time for slice was 60.308289766311646 seconds.
+10/17/2024 05:17:57: INFO - Processing Beauty_and_Personal_Care.jsonl.gz, meta_Beauty_and_Personal_Care.jsonl.gz...
+10/17/2024 05:17:57: INFO - Sample seed is 1.
+10/17/2024 05:20:44: INFO - Sample row count is 109.
+10/17/2024 05:22:04: INFO - Overall processing time for slice was 247.15050315856934 seconds.
+10/17/2024 05:22:04: INFO - Processing Books.jsonl.gz, meta_Books.jsonl.gz...
+10/17/2024 05:22:04: INFO - Sample seed is 1.
+10/17/2024 05:26:31: INFO - Sample row count is 116.
+10/17/2024 05:28:49: INFO - Overall processing time for slice was 404.13039469718933 seconds.
+10/17/2024 05:28:49: INFO - Processing CDs_and_Vinyl.jsonl.gz, meta_CDs_and_Vinyl.jsonl.gz...
+10/17/2024 05:28:49: INFO - Sample seed is 1.
+10/17/2024 05:29:30: INFO - Sample row count is 96.
+10/17/2024 05:29:51: INFO - Overall processing time for slice was 62.27440571784973 seconds.
+10/17/2024 05:29:51: INFO - Processing Cell_Phones_and_Accessories.jsonl.gz, meta_Cell_Phones_and_Accessories.jsonl.gz...
+10/17/2024 05:29:51: INFO - Sample seed is 1.
+10/17/2024 05:32:06: INFO - Sample row count is 116.
+10/17/2024 05:33:14: INFO - Overall processing time for slice was 203.37619280815125 seconds.
+10/17/2024 05:33:14: INFO - Processing Clothing_Shoes_and_Jewelry.jsonl.gz, meta_Clothing_Shoes_and_Jewelry.jsonl.gz...
+10/17/2024 05:33:14: INFO - Sample seed is 1.
+10/17/2024 05:40:14: INFO - Sample row count is 106.
+10/17/2024 05:43:50: INFO - Overall processing time for slice was 635.6307227611542 seconds.
+10/17/2024 05:43:50: INFO - Processing Digital_Music.jsonl.gz, meta_Digital_Music.jsonl.gz...
+10/17/2024 05:43:50: INFO - Sample seed is 1.
+10/17/2024 05:43:51: INFO - Sample row count is 98.
+10/17/2024 05:43:52: INFO - Overall processing time for slice was 1.9289305210113525 seconds.
+10/17/2024 05:43:52: INFO - Processing Electronics.jsonl.gz, meta_Electronics.jsonl.gz...
+10/17/2024 05:43:52: INFO - Sample seed is 1.
+10/17/2024 05:49:10: INFO - Sample row count is 109.
+10/17/2024 05:51:53: INFO - Overall processing time for slice was 481.6580057144165 seconds.
+10/17/2024 05:51:53: INFO - Processing Gift_Cards.jsonl.gz, meta_Gift_Cards.jsonl.gz...
+10/17/2024 05:51:53: INFO - Sample seed is 1.
+10/17/2024 05:51:54: INFO - Sample row count is 98.
+10/17/2024 05:51:55: INFO - Overall processing time for slice was 1.549126386642456 seconds.
+10/17/2024 05:51:55: INFO - Processing Grocery_and_Gourmet_Food.jsonl.gz, meta_Grocery_and_Gourmet_Food.jsonl.gz...
+10/17/2024 05:51:55: INFO - Sample seed is 1.
+10/17/2024 05:53:26: INFO - Sample row count is 121.
+10/17/2024 05:54:12: INFO - Overall processing time for slice was 136.51263666152954 seconds.
+10/17/2024 05:54:12: INFO - Processing Handmade_Products.jsonl.gz, meta_Handmade_Products.jsonl.gz...
+10/17/2024 05:54:12: INFO - Sample seed is 1.
+10/17/2024 05:54:16: INFO - Sample row count is 103.
+10/17/2024 05:54:18: INFO - Overall processing time for slice was 6.437578439712524 seconds.
+10/17/2024 05:54:18: INFO - Processing Health_and_Household.jsonl.gz, meta_Health_and_Household.jsonl.gz...
+10/17/2024 05:54:18: INFO - Sample seed is 1.
+10/17/2024 05:57:07: INFO - Sample row count is 113.
+10/17/2024 05:58:30: INFO - Overall processing time for slice was 252.31504654884338 seconds.
+10/17/2024 05:58:30: INFO - Processing Health_and_Personal_Care.jsonl.gz, meta_Health_and_Personal_Care.jsonl.gz...
+10/17/2024 05:58:30: INFO - Sample seed is 1.
+10/17/2024 05:58:34: INFO - Sample row count is 99.
+10/17/2024 05:58:35: INFO - Overall processing time for slice was 5.124672174453735 seconds.
+10/17/2024 05:58:35: INFO - Processing Home_and_Kitchen.jsonl.gz, meta_Home_and_Kitchen.jsonl.gz...
+10/17/2024 05:58:35: INFO - Sample seed is 1.
+10/17/2024 06:06:21: INFO - Sample row count is 107.
+10/17/2024 06:10:14: INFO - Overall processing time for slice was 698.1471571922302 seconds.
+10/17/2024 06:10:14: INFO - Processing Industrial_and_Scientific.jsonl.gz, meta_Industrial_and_Scientific.jsonl.gz...
+10/17/2024 06:10:14: INFO - Sample seed is 1.
+10/17/2024 06:10:48: INFO - Sample row count is 87.
+10/17/2024 06:11:05: INFO - Overall processing time for slice was 51.52511763572693 seconds.
+10/17/2024 06:11:05: INFO - Processing Kindle_Store.jsonl.gz, meta_Kindle_Store.jsonl.gz...
+10/17/2024 06:11:05: INFO - Sample seed is 1.
+10/17/2024 06:14:34: INFO - Sample row count is 111.
+10/17/2024 06:16:20: INFO - Overall processing time for slice was 315.3330900669098 seconds.
+10/17/2024 06:16:20: INFO - Processing Magazine_Subscriptions.jsonl.gz, meta_Magazine_Subscriptions.jsonl.gz...
+10/17/2024 06:16:20: INFO - Sample seed is 1.
+10/17/2024 06:16:21: INFO - Sample row count is 89.
+10/17/2024 06:16:21: INFO - Overall processing time for slice was 0.9663019180297852 seconds.
+10/17/2024 06:16:21: INFO - Processing Movies_and_TV.jsonl.gz, meta_Movies_and_TV.jsonl.gz...
+10/17/2024 06:16:21: INFO - Sample seed is 1.
+10/17/2024 06:18:20: INFO - Sample row count is 115.
+10/17/2024 06:19:20: INFO - Overall processing time for slice was 178.27614331245422 seconds.
+10/17/2024 06:19:20: INFO - Processing Musical_Instruments.jsonl.gz, meta_Musical_Instruments.jsonl.gz...
+10/17/2024 06:19:20: INFO - Sample seed is 1.
+10/17/2024 06:19:41: INFO - Sample row count is 111.
+10/17/2024 06:19:51: INFO - Overall processing time for slice was 31.211791515350342 seconds.
+10/17/2024 06:19:51: INFO - Processing Office_Products.jsonl.gz, meta_Office_Products.jsonl.gz...
+10/17/2024 06:19:51: INFO - Sample seed is 1.
+10/17/2024 06:21:16: INFO - Sample row count is 129.
+10/17/2024 06:21:59: INFO - Overall processing time for slice was 127.98935270309448 seconds.
+10/17/2024 06:21:59: INFO - Processing Patio_Lawn_and_Garden.jsonl.gz, meta_Patio_Lawn_and_Garden.jsonl.gz...
+10/17/2024 06:21:59: INFO - Sample seed is 1.
+10/17/2024 06:23:49: INFO - Sample row count is 113.
+10/17/2024 06:24:42: INFO - Overall processing time for slice was 162.6528823375702 seconds.
+10/17/2024 06:24:42: INFO - Processing Pet_Supplies.jsonl.gz, meta_Pet_Supplies.jsonl.gz...
+10/17/2024 06:24:42: INFO - Sample seed is 1.
+10/17/2024 06:26:39: INFO - Sample row count is 114.
+10/17/2024 06:27:34: INFO - Overall processing time for slice was 172.6656539440155 seconds.
+10/17/2024 06:27:34: INFO - Processing Software.jsonl.gz, meta_Software.jsonl.gz...
+10/17/2024 06:27:34: INFO - Sample seed is 1.
+10/17/2024 06:28:02: INFO - Sample row count is 91.
+10/17/2024 06:28:16: INFO - Overall processing time for slice was 41.459166049957275 seconds.
+10/17/2024 06:28:16: INFO - Processing Sports_and_Outdoors.jsonl.gz, meta_Sports_and_Outdoors.jsonl.gz...
+10/17/2024 06:28:16: INFO - Sample seed is 1.
+10/17/2024 06:30:30: INFO - Sample row count is 114.
+10/17/2024 06:31:37: INFO - Overall processing time for slice was 201.48057413101196 seconds.
+10/17/2024 06:31:37: INFO - Processing Subscription_Boxes.jsonl.gz, meta_Subscription_Boxes.jsonl.gz...
+10/17/2024 06:31:37: INFO - Sample seed is 1.
+10/17/2024 06:31:38: INFO - Sample row count is 103.
+10/17/2024 06:31:38: INFO - Overall processing time for slice was 0.6510674953460693 seconds.
+10/17/2024 06:31:38: INFO - Processing Tools_and_Home_Improvement.jsonl.gz, meta_Tools_and_Home_Improvement.jsonl.gz...
+10/17/2024 06:31:38: INFO - Sample seed is 1.
+10/17/2024 06:34:53: INFO - Sample row count is 111.
+10/17/2024 06:36:22: INFO - Overall processing time for slice was 284.60190176963806 seconds.
+10/17/2024 06:36:22: INFO - Processing Toys_and_Games.jsonl.gz, meta_Toys_and_Games.jsonl.gz...
+10/17/2024 06:36:22: INFO - Sample seed is 1.
+10/17/2024 06:38:08: INFO - Sample row count is 112.
+10/17/2024 06:39:01: INFO - Overall processing time for slice was 158.28500986099243 seconds.
+10/17/2024 06:39:01: INFO - Processing Unknown.jsonl.gz, meta_Unknown.jsonl.gz...
+10/17/2024 06:39:01: INFO - Sample seed is 1.
+10/17/2024 06:46:24: INFO - Sample row count is 96.
+10/17/2024 06:50:07: INFO - Overall processing time for slice was 666.7224056720734 seconds.
+10/17/2024 06:50:07: INFO - Processing Video_Games.jsonl.gz, meta_Video_Games.jsonl.gz...
+10/17/2024 06:50:07: INFO - Sample seed is 1.
+10/17/2024 06:50:42: INFO - Sample row count is 97.
+10/17/2024 06:50:59: INFO - Overall processing time for slice was 51.23220944404602 seconds.
