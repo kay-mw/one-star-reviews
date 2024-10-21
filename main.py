@@ -1,22 +1,19 @@
 import asyncio
+import gzip
 import json
 import logging
-import math
 import os
+import shutil
 import time
-from functools import reduce
+from typing import List
 
 import google.generativeai as genai
-import typing_extensions as typing
-from delta import *
+import typing_extensions
 from dotenv import load_dotenv
 from google.api_core import exceptions
-from pyspark import StorageLevel
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import broadcast, col
-from pyspark.sql.types import *
 
-# NOTE: If I want this to work, I _could_ just start and stop Spark on each iteration...
+os.environ["POLARS_MAX_THREADS"] = "6"
+import polars as pl
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -31,151 +28,91 @@ logging.basicConfig(
 review_files = sorted(os.listdir("./review_data/"))
 product_files = sorted(os.listdir("./product_data/"))
 
-total_size = (os.path.getsize(f"./review_data/{review_files[0]}") / 1000000) + (
-    os.path.getsize(f"./product_data/{product_files[0]}") / 1000000
-)
-shuffle_partitions = int(total_size // 1000)
-if shuffle_partitions < 2:
-    shuffle_partitions = 4
-
-builder = (
-    SparkSession.builder.appName("one-star-reviews")
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-    .config(
-        "spark.sql.catalog.spark_catalog",
-        "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-    )
-    .config("spark.driver.memory", "6g")
-    .config("spark.driver.cores", "2")
-    .config("spark.driver.maxResultSize", "2g")
-    .config("spark.executor.memory", "4g")
-    .config("spark.memory.offHeap.enabled", "true")
-    .config("spark.memory.offHeap.size", "2g")
-    .config("spark.sql.shuffle.partitions", f"{shuffle_partitions}")
-)
-
-spark = configure_spark_with_delta_pip(builder).getOrCreate()
+load_dotenv()
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
-PRODUCT_SCHEMA = StructType(
-    [
-        StructField("main_category", StringType(), True),
-        StructField("title", StringType(), True),
-        StructField("average_rating", FloatType(), True),
-        StructField("rating_number", IntegerType(), True),
-        StructField("features", ArrayType(StringType()), True),
-        StructField("description", ArrayType(StringType()), True),
-        StructField("price", FloatType(), True),
-        StructField("images", ArrayType(StringType()), True),
-        StructField("videos", ArrayType(StringType()), True),
-        StructField("store", StringType(), True),
-        StructField("categories", ArrayType(StringType()), True),
-        StructField("details", MapType(StringType(), StringType()), True),
-        StructField("parent_asin", StringType(), True),
-        StructField("bought_together", ArrayType(StringType()), True),
-    ]
-)
-REVIEW_SCHEMA = StructType(
-    [
-        StructField("rating", FloatType(), True),
-        StructField("title", StringType(), False),
-        StructField("text", StringType(), False),
-        StructField("images", ArrayType(StringType()), True),
-        StructField("asin", StringType(), True),
-        StructField("parent_asin", StringType(), True),
-        StructField("user_id", StringType(), True),
-        StructField("timestamp", LongType(), True),
-        StructField("verified_purchase", BooleanType(), True),
-        StructField("helpful_vote", IntegerType(), True),
-    ]
-)
-RESPONSE_SCHEMA = StructType(
-    [
-        StructField("timestamp", LongType(), False),
-        StructField("score", IntegerType(), False),
-    ]
-)
+def decompress(file_path_no_ext: str) -> None:
+    with gzip.open(f"{file_path_no_ext}.jsonl.gz", "rb") as f_in:
+        with open(f"{file_path_no_ext}.jsonl", "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
 
-def read_data(review_path: str, product_path: str, rows: int, slice_total: int, seed=1):
+def read_data(
+    review_path: str,
+    product_path: str,
+    slice_init: int,
+    rows: int,
+    slice_total: int,
+    seed: int,
+) -> pl.DataFrame:
     logger.info(f"Processing {review_path}, {product_path}...")
-    logger.info(f"Sample seed is {seed}.")
+    logger.info(f"Seed is {seed}.")
 
-    review_df = (
-        spark.read.schema(REVIEW_SCHEMA)
-        .json(f"./review_data/{review_path}")
-        .drop(
-            "images",
+    lazy_review = (
+        pl.scan_ndjson(
+            source=review_path,
+            schema={
+                "rating": pl.Float32,
+                "title": pl.String,
+                "text": pl.String,
+                "asin": pl.String,
+                "parent_asin": pl.String,
+                "user_id": pl.String,
+                "timestamp": pl.UInt64,
+                "verified_purchase": pl.Boolean,
+                "helpful_vote": pl.UInt32,
+            },
         )
-        .withColumnRenamed("title", "review_title")
-        .withColumnRenamed("text", "review_text")
-        .repartition("parent_asin")
+        .slice(offset=0, length=slice_init)
+        .rename({"title": "review_title", "text": "review_text"})
     )
 
-    product_df = (
-        spark.read.schema(PRODUCT_SCHEMA)
-        .json(f"./product_data/{product_path}")
-        .drop(
-            "images",
-            "videos",
+    lazy_product = (
+        pl.scan_ndjson(
+            source=product_path,
+            schema={
+                "main_category": pl.String,
+                "title": pl.String,
+                "average_rating": pl.Float32,
+                "rating_number": pl.Int32,
+                "price": pl.Float32,
+                "store": pl.String,
+                "categories": pl.List(inner=pl.String),
+                "parent_asin": pl.String,
+            },
         )
-        .withColumnRenamed("title", "product_title")
-        .repartition("parent_asin")
+        .slice(offset=0, length=slice_init)
+        .rename({"title": "product_title"})
     )
 
-    df = review_df.join(product_df, "parent_asin")
-    review_df.unpersist(True)
-    product_df.unpersist(True)
+    lazy_master = lazy_review.join(lazy_product, on="parent_asin", how="inner")
+    sample_df = lazy_master.collect(streaming=True).sample(
+        n=rows * slice_total, seed=seed
+    )
 
-    row_target = rows * slice_total
-    frac = row_target / df.count()
-
-    sample = df.sample(fraction=frac, seed=seed)
-    logger.info(f"Sample row count is {sample.count()}.")
-
-    df.unpersist(True)
-    sample.unpersist(True)
-
-    return sample
+    return sample_df
 
 
-def slice_data(sample, slice_size: int, size: int):
-    assert slice_total % slice_size == 0, "slice_total is not divisible by slice_size"
-
-    n_splits = math.ceil(size / rows)
-    fractions = [1.0] * n_splits
-    samples = sample.randomSplit(fractions, 1)
-    logger.info(f"dfs contains {len(samples)} slices.")
-
-    for i in range(len(samples) // slice_size):
-        lower = slice_size * i if i == 0 else (slice_size * i) + 1
-        upper = slice_size * (i + 1)
-
-        logger.info(f"Processing dataframes {lower} - {upper}")
-        dfs_slice = samples[lower:upper]
-
-        yield dfs_slice
-
-
-class Reviews(typing.TypedDict):
+class Reviews(typing_extensions.TypedDict):
     timestamp: int
     score: int
 
 
 async def async_analyse_reviews(data: str):
-    load_dotenv()
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
     with open("./prompt.md", "r") as file:
-        prompt = file.read() + "\n" + data
-        p_file = open("prompt_examples.json", "a")
-        p_file.write(data + "\n\n")
-        p_file.close()
+        prompt = file.read() + "\n\n" + data
+
+        model_name = None
+        for model_info in genai.list_tuned_models():
+            model_name = model_info.name
+
+        assert model_name is not None, "Failed to find any finetuned models."
 
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            model_name=model_name,
             generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
+                response_mime_type="text/plain",
                 response_schema=list[Reviews],
             ),
         )
@@ -183,7 +120,12 @@ async def async_analyse_reviews(data: str):
     for _ in range(3):
         try:
             response = await model.generate_content_async(prompt)
-            response = json.loads(response.text)
+            line_list = response.text.splitlines()
+            valid_lines = [
+                line.replace("`", "").strip() for line in line_list if "{" in line
+            ]
+            valid_string = "".join(valid_lines)
+            response = json.loads(valid_string)
             return response
         except json.JSONDecodeError:
             logger.info("Failed to parse response. Skipping...")
@@ -195,97 +137,101 @@ async def async_analyse_reviews(data: str):
             continue
 
 
-rows = 10
-slice_size = 10
-slice_total = 10
-for review_path, product_path in zip(review_files, product_files):
-    tstart = time.time()
-    sample = read_data(
-        review_path=review_path,
-        product_path=product_path,
+async def main(slices: List[pl.DataFrame]):
+    tasks = []
+    for sliced_df in slices:
+        prompt_dict = sliced_df.select(
+            pl.col("review_title"),
+            pl.col("review_text"),
+            pl.col("timestamp"),
+            pl.col("rating"),
+            pl.col("product_title"),
+        ).to_dicts()
+        data = json.dumps(prompt_dict)
+
+        task = asyncio.create_task(async_analyse_reviews(data=data))
+        tasks.append(task)
+
+    return await asyncio.gather(*tasks)
+
+
+open("./prompt_examples.json", "w").close()
+[os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
+[
+    os.remove(f"./product_data/{file}")
+    for file in product_files
+    if file.endswith("jsonl")
+]
+
+for review_file, product_file in zip(review_files, product_files):
+    t0 = time.time()
+    review_name = review_file.split(".")[0]
+    review_path = f"./review_data/{review_name}"
+
+    product_name = product_file.split(".")[0]
+    product_path = f"./product_data/{product_name}"
+
+    decompress(review_path)
+    decompress(product_path)
+
+    rows = 30
+    slice_total = 15
+    df = read_data(
+        review_path=f"{review_path}.jsonl",
+        product_path=f"{product_path}.jsonl",
+        slice_init=1000000,
         rows=rows,
         slice_total=slice_total,
-    ).persist(StorageLevel.MEMORY_AND_DISK)
-    size = sample.count()
-    dfs_slice = slice_data(sample=sample, slice_size=slice_size, size=size)
-    sample.unpersist(True)
+        seed=2,
+    )
 
-    for dfs in dfs_slice:
+    slices = []
+    for i in range(slice_total):
+        if i == 0:
+            slices.append(df.slice(offset=i, length=rows))
+        else:
+            slices.append(df.slice(offset=i * rows, length=rows))
 
-        async def main():
-            tasks = []
-            for df in dfs:
-                llm_df = df.drop(
-                    "parent_asin",
-                    "asin",
-                    "user_id",
-                    "verified_purchase",
-                    "helpful_vote",
-                    "bought_together",
-                    "details",
-                    "categories",
-                    "store",
-                    "description",
-                    "features",
-                    "main_category",
-                    "average_rating",
-                    "rating_number",
-                    "price",
+    def get_or_create_eventloop():
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError as e:
+            if "There is no current event loop in thread" in str(e):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                return asyncio.get_event_loop()
+            else:
+                raise e
+
+    loop = get_or_create_eventloop()
+    responses = loop.run_until_complete(main(slices=slices))
+
+    response_dfs = []
+    for response in responses:
+        if response is None:
+            continue
+        else:
+            response_dfs.append(
+                pl.from_dicts(
+                    response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
                 )
+            )
 
-                collection = llm_df.persist(StorageLevel.MEMORY_AND_DISK).collect()
-                llm_dict = [row.asDict() for row in collection]
-                llm_str = json.dumps(llm_dict)
+    response_df = pl.concat(items=response_dfs)
+    final_df = df.join(response_df, on="timestamp", how="inner")
 
-                task = asyncio.create_task(async_analyse_reviews(llm_str))
-                tasks.append(task)
+    assert len(final_df) > 0, "No data present in final_df."
 
-                df.unpersist(True)
-                llm_df.unpersist(True)
+    final_df.write_delta(target="./export/polars-delta/", mode="append")
 
-            responses = await asyncio.gather(*tasks)
-            return responses
+    logger.info(
+        f"""Exported final_df. Relevant row counts were...
+    df: {len(df)}
+    response_df: {len(response_df)}
+    final_df: {len(final_df)}"""
+    )
 
-        responses = asyncio.run(main())
-        logger.info(
-            f"Overall processing time for slice was {time.time() - tstart} seconds."
-        )
+    os.remove(f"{review_path}.jsonl")
+    os.remove(f"{product_path}.jsonl")
 
-        rdd = spark.sparkContext.parallelize(responses)
-        response_df = (
-            spark.read.schema(RESPONSE_SCHEMA)
-            .json(rdd)
-            .persist(StorageLevel.MEMORY_AND_DISK)
-        )
-
-        all_dfs = (
-            reduce(DataFrame.union, dfs)
-            .coalesce(2)
-            .persist(StorageLevel.MEMORY_AND_DISK)
-        )
-
-        final_df = all_dfs.join(
-            broadcast(response_df.distinct()), "timestamp", how="inner"
-        )
-
-        assert (
-            final_df.filter(col("timestamp").isNotNull()).count() > 0
-        ), f"No data present in final_df: {final_df.filter(col('timestamp').isNotNull()).count()}"
-
-        final_df = final_df.coalesce(1)
-        final_df.write.format("delta").mode("append").save("./export/few")
-        final_df.unpersist(True)
-
-        logger.info(
-            f"""Exported final_df. Relevant row counts were...
-        all_dfs: {all_dfs.filter(col("timestamp").isNotNull()).count()}
-        response_df: {response_df.filter(col("timestamp").isNotNull()).count()}
-        final_df: {final_df.filter(col("timestamp").isNotNull()).count()}"""
-        )
-
-        rdd.unpersist(True)
-        [df.unpersist(True) for df in dfs]
-        response_df.unpersist(True)
-        all_dfs.unpersist(True)
-
-spark.stop()
+    logger.info(f"Processing {review_name} took {time.time() - t0}s.")
