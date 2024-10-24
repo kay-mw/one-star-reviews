@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import time
-from typing import List
+from typing import Any, List
 
 import google.generativeai as genai
 import typing_extensions
@@ -99,15 +99,27 @@ class Reviews(typing_extensions.TypedDict):
     score: int
 
 
-async def async_analyse_reviews(data: str):
+def get_model(name: str) -> str:
+    model_name = None
+    for model_info in genai.list_tuned_models():
+        model_name = model_info.name
+        if name in model_name:
+            return model_name
+        else:
+            continue
+
+    logger.info(f"Using model name: {model_name}")
+
+    assert model_name is not None, f"Failed to find model {name}."
+
+    return model_name
+
+
+async def async_analyse_reviews(data: str) -> List[dict] | None:
     with open("./prompt.md", "r") as file:
         prompt = file.read() + "\n\n" + data
 
-        model_name = None
-        for model_info in genai.list_tuned_models():
-            model_name = model_info.name
-
-        assert model_name is not None, "Failed to find any finetuned models."
+        model_name = get_model(name="synctheticdata")
 
         model = genai.GenerativeModel(
             model_name=model_name,
@@ -137,8 +149,11 @@ async def async_analyse_reviews(data: str):
             continue
 
 
-async def main(slices: List[pl.DataFrame]):
+async def main(
+    slices: List[pl.DataFrame],
+) -> tuple[List[List[dict | Any]], List[dict]]:
     tasks = []
+    input_data = []
     for sliced_df in slices:
         prompt_dict = sliced_df.select(
             pl.col("review_title"),
@@ -151,12 +166,17 @@ async def main(slices: List[pl.DataFrame]):
 
         task = asyncio.create_task(async_analyse_reviews(data=data))
         tasks.append(task)
+        input_data.append(prompt_dict)
 
-    return await asyncio.gather(*tasks)
+    responses = await asyncio.gather(*tasks)
+    return responses, input_data
 
 
-open("./prompt_examples.json", "w").close()
+# Clear lingering files.
+# open("./prompt_examples.json", "w").close()
+
 [os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
+
 [
     os.remove(f"./product_data/{file}")
     for file in product_files
@@ -174,7 +194,7 @@ for review_file, product_file in zip(review_files, product_files):
     decompress(review_path)
     decompress(product_path)
 
-    rows = 30
+    rows = 60
     slice_total = 15
     df = read_data(
         review_path=f"{review_path}.jsonl",
@@ -204,7 +224,11 @@ for review_file, product_file in zip(review_files, product_files):
                 raise e
 
     loop = get_or_create_eventloop()
-    responses = loop.run_until_complete(main(slices=slices))
+    responses, input_data = loop.run_until_complete(main(slices=slices))
+
+    # with open("./prompt_examples.json", "a") as file:
+    #     file.write(json.dumps(input_data[0]) + "\n")
+    #     file.write(json.dumps(responses[0]) + "\n")
 
     response_dfs = []
     for response in responses:
@@ -222,7 +246,7 @@ for review_file, product_file in zip(review_files, product_files):
 
     assert len(final_df) > 0, "No data present in final_df."
 
-    final_df.write_delta(target="./export/polars-delta/", mode="append")
+    # final_df.write_delta(target="./export/polars-delta/", mode="append")
 
     logger.info(
         f"""Exported final_df. Relevant row counts were...

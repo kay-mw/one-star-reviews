@@ -2,15 +2,21 @@ import duckdb
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import polars as pl
 from deltalake import DeltaTable
 from plotly.subplots import make_subplots
 
-import polars as pl
-
 review_table = "delta_scan('./export/delta-table/')"
+polars_table = "delta_scan('./export/polars-delta/')"
 distinct_reviews = f"(SELECT DISTINCT(review_id) FROM {review_table})"
 
-pl.Config(tbl_rows=-1, set_fmt_str_lengths=1000)
+pl.Config(tbl_rows=-1, set_fmt_str_lengths=2000)
+
+duckdb.sql(
+    f"SELECT main_category, COUNT(*) FROM {polars_table} GROUP BY main_category;"
+).pl()
+
+duckdb.sql(f"SELECT COUNT(*) FROM {polars_table} WHERE rating = 1.0;")
 
 duckdb.sql(
     f"SELECT bought_together FROM {review_table} WHERE bought_together IS NOT NULL;"
