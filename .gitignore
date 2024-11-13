@@ -4,3 +4,5 @@ review_data/
 .env
 export/
 *.log
+llama.cpp/
+tuning/

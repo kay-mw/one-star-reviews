@@ -31,11 +31,14 @@ product_files = sorted(os.listdir("./product_data/"))
 load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
+for model in genai.list_models():
+    print(model)
 
-def decompress(file_path_no_ext: str) -> None:
+
+def decompress(file_path_no_ext: str, buffer_size: int) -> None:
     with gzip.open(f"{file_path_no_ext}.jsonl.gz", "rb") as f_in:
         with open(f"{file_path_no_ext}.jsonl", "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+            shutil.copyfileobj(fsrc=f_in, fdst=f_out, length=buffer_size)
 
 
 def read_data(
@@ -108,8 +111,6 @@ def get_model(name: str) -> str:
         else:
             continue
 
-    logger.info(f"Using model name: {model_name}")
-
     assert model_name is not None, f"Failed to find model {name}."
 
     return model_name
@@ -119,19 +120,20 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
     with open("./prompt.md", "r") as file:
         prompt = file.read() + "\n\n" + data
 
-        model_name = get_model(name="synctheticdata")
+        model_name = get_model(name="syntheticdata33-ax4flo2rsys7")
 
         model = genai.GenerativeModel(
             model_name=model_name,
             generation_config=genai.GenerationConfig(
                 response_mime_type="text/plain",
                 response_schema=list[Reviews],
+                max_output_tokens=2000,
             ),
         )
 
     for _ in range(3):
         try:
-            response = await model.generate_content_async(prompt)
+            response = await model.generate_content_async(data)
             line_list = response.text.splitlines()
             valid_lines = [
                 line.replace("`", "").strip() for line in line_list if "{" in line
@@ -141,6 +143,7 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
             return response
         except json.JSONDecodeError:
             logger.info("Failed to parse response. Skipping...")
+            print(response.text)
             break
         except exceptions.ResourceExhausted:
             n_seconds = 3
@@ -172,7 +175,6 @@ async def main(
     return responses, input_data
 
 
-# Clear lingering files.
 # open("./prompt_examples.json", "w").close()
 
 [os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
@@ -185,24 +187,26 @@ async def main(
 
 for review_file, product_file in zip(review_files, product_files):
     t0 = time.time()
+
     review_name = review_file.split(".")[0]
     review_path = f"./review_data/{review_name}"
 
     product_name = product_file.split(".")[0]
     product_path = f"./product_data/{product_name}"
 
-    decompress(review_path)
-    decompress(product_path)
+    decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
+    decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
 
-    rows = 60
+    rows = 100
     slice_total = 15
+    seed = 3
     df = read_data(
         review_path=f"{review_path}.jsonl",
         product_path=f"{product_path}.jsonl",
         slice_init=1000000,
         rows=rows,
         slice_total=slice_total,
-        seed=2,
+        seed=seed,
     )
 
     slices = []
@@ -232,9 +236,7 @@ for review_file, product_file in zip(review_files, product_files):
 
     response_dfs = []
     for response in responses:
-        if response is None:
-            continue
-        else:
+        if response is not None:
             response_dfs.append(
                 pl.from_dicts(
                     response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}

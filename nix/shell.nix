@@ -20,6 +20,7 @@ let
     [ ] ++ (with pkgs; [
       jdk # Pyspark
       duckdb
+      google-cloud-sdk
     ]);
 in import ./python-shell.nix {
   extraBuildInputs = extraBuildInputs;
