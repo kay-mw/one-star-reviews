@@ -5,4 +5,5 @@ review_data/
 export/
 *.log
 llama.cpp/
-tuning/
+review-model/
+outputs/
