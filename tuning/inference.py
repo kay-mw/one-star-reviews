@@ -6,11 +6,9 @@ from unsloth import FastLanguageModel
 max_seq_length = 512
 dtype = None
 load_in_4bit = True
-r = 16
-lora_alpha = 16
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="review-model",
+    model_name="./tuning/review-model",
     max_seq_length=max_seq_length,
     dtype=dtype,
     load_in_4bit=load_in_4bit,
@@ -19,7 +17,7 @@ FastLanguageModel.for_inference(model)
 
 
 def read_prompt():
-    with open("test_prompt.txt") as file:
+    with open("./tuning/test_prompt.txt") as file:
         return file.read()
 
 
@@ -37,7 +35,8 @@ tensor_response = model.generate(
     streamer=text_streamer,
     pad_token_id=tokenizer.eos_token_id,
 )
-response = [tokenizer.decode(x) for x in tensor_response][0]
+response = tokenizer.batch_decode(tensor_response)
+print(response)
 
 before, match, after = response.partition("### Response:")
 if match:

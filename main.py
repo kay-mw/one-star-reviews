@@ -1,19 +1,19 @@
-import asyncio
+# TODO: Re-download that review file I deleted.
+# TODO: Extend training dataset for improved fine-tuning.
+
 import gzip
 import json
 import logging
 import os
 import shutil
 import time
-from typing import Any, List
+from typing import List
 
-import google.generativeai as genai
-import typing_extensions
-from dotenv import load_dotenv
-from google.api_core import exceptions
+import polars as pl
+from transformers import TextStreamer
+from unsloth import FastLanguageModel
 
 os.environ["POLARS_MAX_THREADS"] = "6"
-import polars as pl
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -27,12 +27,6 @@ logging.basicConfig(
 
 review_files = sorted(os.listdir("./review_data/"))
 product_files = sorted(os.listdir("./product_data/"))
-
-load_dotenv()
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-for model in genai.list_models():
-    print(model)
 
 
 def decompress(file_path_no_ext: str, buffer_size: int) -> None:
@@ -97,85 +91,65 @@ def read_data(
     return sample_df
 
 
-class Reviews(typing_extensions.TypedDict):
-    timestamp: int
-    score: int
+def prep_model(max_seq_length: int, dtype=None, load_in_4bit=True):
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name="./tuning/review-model/",
+        max_seq_length=max_seq_length,
+        dtype=dtype,
+        load_in_4bit=load_in_4bit,
+    )
+    FastLanguageModel.for_inference(model)
+
+    return model, tokenizer
 
 
-def get_model(name: str) -> str:
-    model_name = None
-    for model_info in genai.list_tuned_models():
-        model_name = model_info.name
-        if name in model_name:
-            return model_name
-        else:
-            continue
-
-    assert model_name is not None, f"Failed to find model {name}."
-
-    return model_name
-
-
-async def async_analyse_reviews(data: str) -> List[dict] | None:
-    with open("./prompt.md", "r") as file:
-        prompt = file.read() + "\n\n" + data
-
-        model_name = get_model(name="syntheticdata33-ax4flo2rsys7")
-
-        model = genai.GenerativeModel(
-            model_name=model_name,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="text/plain",
-                response_schema=list[Reviews],
-                max_output_tokens=2000,
-            ),
-        )
-
-    for _ in range(3):
-        try:
-            response = await model.generate_content_async(data)
-            line_list = response.text.splitlines()
-            valid_lines = [
-                line.replace("`", "").strip() for line in line_list if "{" in line
-            ]
-            valid_string = "".join(valid_lines)
-            response = json.loads(valid_string)
-            return response
-        except json.JSONDecodeError:
-            logger.info("Failed to parse response. Skipping...")
-            print(response.text)
-            break
-        except exceptions.ResourceExhausted:
-            n_seconds = 3
-            logger.info(f"Rate limited. Waiting {n_seconds}s and retrying...")
-            time.sleep(n_seconds)
-            continue
-
-
-async def main(
+def prompt_model(
+    model,
+    tokenizer,
     slices: List[pl.DataFrame],
-) -> tuple[List[List[dict | Any]], List[dict]]:
-    tasks = []
-    input_data = []
+):
+    responses = []
     for sliced_df in slices:
         prompt_dict = sliced_df.select(
-            pl.col("review_title"),
-            pl.col("review_text"),
-            pl.col("timestamp"),
-            pl.col("rating"),
             pl.col("product_title"),
+            pl.col("rating"),
+            pl.col("review_text"),
+            pl.col("review_title"),
+            pl.col("timestamp"),
         ).to_dicts()
-        data = json.dumps(prompt_dict)
+        prompt = (
+            "Score the following product reviews. Output only a JSON array containing timestamp and score pairs.\n"
+            + json.dumps(prompt_dict)
+        )
+        messages = [{"role": "user", "content": prompt}]
+        print(messages)
 
-        task = asyncio.create_task(async_analyse_reviews(data=data))
-        tasks.append(task)
-        input_data.append(prompt_dict)
+        input_ids = tokenizer.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            return_tensors="pt",
+        ).to("cuda")
+        text_streamer = TextStreamer(tokenizer, skip_prompt=True)
+        tensor_response = model.generate(
+            input_ids,
+            streamer=text_streamer,
+            pad_token_id=tokenizer.eos_token_id,
+        )
 
-    responses = await asyncio.gather(*tasks)
-    return responses, input_data
+        response = tokenizer.batch_decode(tensor_response)
+        _, match, after = response.partition("### Response:")
 
+        if match:
+            result = match + after
+        else:
+            raise ValueError("Failed to parse response.")
 
-# open("./prompt_examples.json", "w").close()
+        result_lines = result.splitlines()[2:-2]
+        result_json = json.loads("".join(result_lines))
+        responses.append(result_json)
+
+    return responses
+
 
 [os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
 
@@ -185,6 +159,7 @@ async def main(
     if file.endswith("jsonl")
 ]
 
+model, tokenizer = prep_model(max_seq_length=512)
 for review_file, product_file in zip(review_files, product_files):
     t0 = time.time()
 
@@ -197,9 +172,9 @@ for review_file, product_file in zip(review_files, product_files):
     decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
     decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
 
-    rows = 100
+    rows = 1
     slice_total = 15
-    seed = 3
+    seed = 1
     df = read_data(
         review_path=f"{review_path}.jsonl",
         product_path=f"{product_path}.jsonl",
@@ -211,28 +186,9 @@ for review_file, product_file in zip(review_files, product_files):
 
     slices = []
     for i in range(slice_total):
-        if i == 0:
-            slices.append(df.slice(offset=i, length=rows))
-        else:
-            slices.append(df.slice(offset=i * rows, length=rows))
+        slices.append(df.slice(offset=i * rows, length=rows))
 
-    def get_or_create_eventloop():
-        try:
-            return asyncio.get_event_loop()
-        except RuntimeError as e:
-            if "There is no current event loop in thread" in str(e):
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                return asyncio.get_event_loop()
-            else:
-                raise e
-
-    loop = get_or_create_eventloop()
-    responses, input_data = loop.run_until_complete(main(slices=slices))
-
-    # with open("./prompt_examples.json", "a") as file:
-    #     file.write(json.dumps(input_data[0]) + "\n")
-    #     file.write(json.dumps(responses[0]) + "\n")
+    responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
 
     response_dfs = []
     for response in responses:
