@@ -17,8 +17,9 @@ FastLanguageModel.for_inference(model)
 
 
 def read_prompt():
-    with open("test_prompt.txt") as file:
-        return file.read()
+    with open("test_prompt.txt") as data:
+        with open("../prompt.md") as prompt:
+            return prompt.read() + "\n" + data.read()
 
 
 prompt = read_prompt()

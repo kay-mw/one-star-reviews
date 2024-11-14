@@ -15,10 +15,13 @@ for line in line_generator:
     timestamps = []
     for entry in review_dict:
         pprint.pprint(entry)
-        try:
-            score = int(input("Score: "))
-        except ValueError:
-            score = int(input("Try again: "))
+        score = None
+        while True:
+            try:
+                score = int(input("Score: "))
+                break
+            except ValueError:
+                print("Invalid input. Please enter a valid integer.")
         print("\n")
         timestamps.append({"timestamp": entry["timestamp"], "score": score})
 

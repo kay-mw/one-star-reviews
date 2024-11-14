@@ -118,7 +118,7 @@ def prompt_model(
             pl.col("timestamp"),
         ).to_dicts()
 
-        with open("prompt.md") as file:
+        with open("prompt.md", "r") as file:
             instruction = file.read()
 
         prompt = instruction + json.dumps(prompt_dict)
@@ -135,11 +135,11 @@ def prompt_model(
             input_ids,
             streamer=text_streamer,
             pad_token_id=tokenizer.eos_token_id,
-            # max_new_tokens=220,
+            max_new_tokens=300,
         )
 
-        response = tokenizer.batch_decode(tensor_response)
-        _, match, after = response.partition("### Response:")[0]
+        response = tokenizer.batch_decode(tensor_response)[0]
+        _, match, after = response.partition("### Response:")
 
         if match:
             result = match + after
@@ -147,8 +147,13 @@ def prompt_model(
             raise ValueError("Failed to parse response.")
 
         result_lines = result.splitlines()[2:-2]
-        result_json = json.loads("".join(result_lines))
-        responses.append(result_json)
+        try:
+            result_json = json.loads("".join(result_lines))
+            responses.append(result_json)
+        except json.JSONDecodeError:
+            logger.info("Failed to parse response, skipping...")
+            responses.append(None)
+            continue
 
     return responses
 
@@ -178,7 +183,7 @@ for review_file, product_file in zip(review_files, product_files):
 
     rows = 10
     slice_total = 1
-    seed = 10
+    seed = 20
     df = read_data(
         review_path=f"{review_path}.jsonl",
         product_path=f"{product_path}.jsonl",
@@ -187,10 +192,6 @@ for review_file, product_file in zip(review_files, product_files):
         slice_total=slice_total,
         seed=seed,
     )
-
-    # slices = []
-    # for i in range(slice_total):
-    #     slices.append(df.slice(offset=i * rows, length=rows))
 
     prompt_dict = df.select(
         pl.col("product_title"),
@@ -202,10 +203,13 @@ for review_file, product_file in zip(review_files, product_files):
     with open("prompt_examples.json", "a") as file:
         file.write(json.dumps(prompt_dict) + "\n")
 
-    os.remove(f"{review_path}.jsonl")
-    os.remove(f"{product_path}.jsonl")
-
+    # slices = []
+    # for i in range(slice_total):
+    #     slices.append(df.slice(offset=i * rows, length=rows))
+    #
     # responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
+    # print("DONE!")
+    # time.sleep(60)
     #
     # response_dfs = []
     # for response in responses:
@@ -219,6 +223,19 @@ for review_file, product_file in zip(review_files, product_files):
     # response_df = pl.concat(items=response_dfs)
     # final_df = df.join(response_df, on="timestamp", how="inner")
     #
+    # with pl.Config(set_fmt_str_lengths=500, tbl_rows=-1):
+    #     print(
+    #         final_df.select(
+    #             pl.col("rating"),
+    #             pl.col("review_title"),
+    #             pl.col("review_text"),
+    #             pl.col("score"),
+    #         )
+    #     )
+    #
+    os.remove(f"{review_path}.jsonl")
+    os.remove(f"{product_path}.jsonl")
+
     # assert len(final_df) > 0, "No data present in final_df."
     #
     # # final_df.write_delta(target="./export/polars-delta/", mode="append")
