@@ -117,10 +117,11 @@ def prompt_model(
             pl.col("review_title"),
             pl.col("timestamp"),
         ).to_dicts()
-        prompt = (
-            "Score the following product reviews. Output only a JSON array containing timestamp and score pairs.\n"
-            + json.dumps(prompt_dict)
-        )
+
+        with open("prompt.md") as file:
+            instruction = file.read()
+
+        prompt = instruction + json.dumps(prompt_dict)
         messages = [{"role": "user", "content": prompt}]
         print(messages)
 
@@ -134,10 +135,11 @@ def prompt_model(
             input_ids,
             streamer=text_streamer,
             pad_token_id=tokenizer.eos_token_id,
+            # max_new_tokens=220,
         )
 
         response = tokenizer.batch_decode(tensor_response)
-        _, match, after = response.partition("### Response:")
+        _, match, after = response.partition("### Response:")[0]
 
         if match:
             result = match + after
@@ -159,7 +161,9 @@ def prompt_model(
     if file.endswith("jsonl")
 ]
 
-model, tokenizer = prep_model(max_seq_length=512)
+open("prompt_examples.json", "w").close()
+
+# model, tokenizer = prep_model(max_seq_length=512)
 for review_file, product_file in zip(review_files, product_files):
     t0 = time.time()
 
@@ -172,9 +176,9 @@ for review_file, product_file in zip(review_files, product_files):
     decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
     decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
 
-    rows = 1
-    slice_total = 15
-    seed = 1
+    rows = 10
+    slice_total = 1
+    seed = 10
     df = read_data(
         review_path=f"{review_path}.jsonl",
         product_path=f"{product_path}.jsonl",
@@ -184,36 +188,47 @@ for review_file, product_file in zip(review_files, product_files):
         seed=seed,
     )
 
-    slices = []
-    for i in range(slice_total):
-        slices.append(df.slice(offset=i * rows, length=rows))
+    # slices = []
+    # for i in range(slice_total):
+    #     slices.append(df.slice(offset=i * rows, length=rows))
 
-    responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
-
-    response_dfs = []
-    for response in responses:
-        if response is not None:
-            response_dfs.append(
-                pl.from_dicts(
-                    response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
-                )
-            )
-
-    response_df = pl.concat(items=response_dfs)
-    final_df = df.join(response_df, on="timestamp", how="inner")
-
-    assert len(final_df) > 0, "No data present in final_df."
-
-    # final_df.write_delta(target="./export/polars-delta/", mode="append")
-
-    logger.info(
-        f"""Exported final_df. Relevant row counts were...
-    df: {len(df)}
-    response_df: {len(response_df)}
-    final_df: {len(final_df)}"""
-    )
+    prompt_dict = df.select(
+        pl.col("product_title"),
+        pl.col("rating"),
+        pl.col("review_text"),
+        pl.col("review_title"),
+        pl.col("timestamp"),
+    ).to_dicts()
+    with open("prompt_examples.json", "a") as file:
+        file.write(json.dumps(prompt_dict) + "\n")
 
     os.remove(f"{review_path}.jsonl")
     os.remove(f"{product_path}.jsonl")
+
+    # responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
+    #
+    # response_dfs = []
+    # for response in responses:
+    #     if response is not None:
+    #         response_dfs.append(
+    #             pl.from_dicts(
+    #                 response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
+    #             )
+    #         )
+    #
+    # response_df = pl.concat(items=response_dfs)
+    # final_df = df.join(response_df, on="timestamp", how="inner")
+    #
+    # assert len(final_df) > 0, "No data present in final_df."
+    #
+    # # final_df.write_delta(target="./export/polars-delta/", mode="append")
+    #
+    # logger.info(
+    #     f"""Exported final_df. Relevant row counts were...
+    # df: {len(df)}
+    # response_df: {len(response_df)}
+    # final_df: {len(final_df)}"""
+    # )
+    #
 
     logger.info(f"Processing {review_name} took {time.time() - t0}s.")

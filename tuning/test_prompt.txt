@@ -1,2 +1,65 @@
-Score the following product reviews. Output only a JSON array containing timestamp and score pairs.
+<TASK>
+
+Analyze the attached data containing product reviews and provide evaluations in
+JSON format.
+
+<EVALUATION-CRITERIA>
+
+Familiarise yourself with the below criteria, which you will use to generate an
+overall quality rating ("score"), which can be any integer greater than or equal
+to 0 and less than or equal to 10.
+
+Reviews should be evaluated based on:
+
+1. How detailed and useful the information is.
+
+   - A perfect review will give highly detailed information, e.g. not just
+     saying "it works great", but saying why it works great.
+   - A perfect review will tend to give contextual information, e.g. "it worked
+     great for me, but if you have x characteristic it may not work well"
+   - A perfect review will be of a reasonable length. There is no specific
+     character limit here, it is about striking a balance between sufficient
+     detail whilst avoiding the inclusion of unimportant information.
+
+2. How objective the review is.
+
+   - A perfect review will make very few personal "I" or "my" statements.
+   - A perfect review will stick to objective language, using emotive adjectives
+     only when warranted. They may say "the manufacturing was sloppy", but would
+     not say "the manufacturing was complete garbage".
+
+3. How relevant the review is.
+
+   - A perfect review will be highly relevant to the product, meaning you could
+     not copy the review to a completely different product and have it still
+     make sense.
+
+<INSTRUCTIONS>
+
+1. Analyze each review provided.
+2. Use the evaluation criteria to assess the review.
+3. Format your response as valid JSON following the output format.
+
+<INPUT-DATA-SCHEMA>
+
+The schema of the review data attached to this prompt is as follows:
+
+- "review_title": the title of the review. (STRING)
+- "review_text": the actual contents/text of the review. (STRING)
+- "timestamp": the unique identifier of each review. (INTEGER)
+- "rating": the star rating of the review, ranging from 1-5. (FLOAT)
+- "product_title": the title of the product being reviewed. (STRING)
+
+<OUTPUT-SCHEMA>
+
+The schema of your output should be as follows:
+
+`[{"timestamp": <timestamp: int>, "score": <score: int>}]`
+
+Where `<timestamp: int>` is the timestamp for that review, from the input data,
+and `<score: int>` your score/rating/evaluation of that review based on the
+previously described criteria.
+
+<REVIEW-DATA>
+
 [{"product_title": "Deloreva Women Casual Jumpsuit Sleeveless Strap V Neck, No Color, Size No Size", "rating": 5, "review_text": "Very cute and the material was nice and not thin at all. True to size!", "review_title": "Very cute!!", "timestamp": 1575919488193}, {"product_title": "Women's Plus Size 50s Vintage Polka Dot Bodycon Pencil Dress Navy Blue, XX-Large", "rating": 1, "review_text": "It was a cute \ud83d\udc57 but it didn't compliment me", "review_title": "Just didn't work for me", "timestamp": 1579820842210}, {"product_title": "The Reading Glasses Company Pink & Black Readers Designer Style Womens Ladies Spring Hinges R1-4 +1.00", "rating": 5, "review_text": "She say awesome - I say happy me!<br /><br />PS not any sewing reference, just to get the valley accent....", "review_title": "Like SEWWWWW  retro.....", "timestamp": 1538623445606}, {"product_title": "Voeons All Black Steel Band Watches for Men Classic Stainless Steel Watch Casual Business Quartz Analog Wrist Watch with Calendar", "rating": 5, "review_text": "Excelente 100% como se ve as\u00ed llega.", "review_title": "Five Stars", "timestamp": 1537956422296}, {"product_title": "imesrun Womens Ribbed Wrap Sweater V Neck Long Sleeve Ruched Office T Shirt Knit Pullover Tops", "rating": 5, "review_text": "Love", "review_title": "Fits  greats", "timestamp": 1600224938522}, {"product_title": "WEANIA Women's Maxi Dress Floral Printed Summer Scoop Neck Casual Dress Elastic Wrist 3/4 Sleeve Tunic Dress for Women (Green, XX-Large)", "rating": 4, "review_text": "It is tighter on the top part than I would normally wear.", "review_title": "Little on small size", "timestamp": 1546489672967}, {"product_title": "Bluetime Women's Casual Batwing Sleeve Chevron Print Blouse Tops \u00a1/xad (S, Khaki)", "rating": 2, "review_text": "I am not fond of this shirt. I purchased a small which is still large. I'm petite, 5'2\" 105lbs. The neck part is a bit stretched out and sags, it doesn't compliment my body at all. To top it off, the sleeves are two different lengths! I was also not expecting it to be what I think is polyester.", "review_title": "Fits weird", "timestamp": 1459294712000}, {"product_title": "Womens Light Weight Open Front Long Cardigan with Pocket (Large, Mustard)", "rating": 5, "review_text": "Great addition to my wardrobe.  Bought another color!", "review_title": "Excellent deal", "timestamp": 1538410774754}, {"product_title": "eFuture(TM) Apricot Fashion Soft Chiffon Black Cat Prints Ladies /Women Long Scarf Shawls +eFuture's nice Keyring", "rating": 2, "review_text": "Not a practical scarf. I just lay it over a lamp and that is cute enough.", "review_title": "Not practical", "timestamp": 1445440625000}, {"product_title": "Scarleton Classic Formal Satchel H166501 - Black", "rating": 5, "review_text": "So I tend to carry around a lot of things in my purse everyday. I've had a couple of bags that were huge - seriously they resembled what most people would consider a carry-on for a weekend trip - and it felt like I was always trying to find stuff to put in them, stopping just short of the kitchen sink. I like that this purse has a few but not too many little inside pockets for smaller stuff and then a larger one right in the middle featuring a zipper, effectively dividing the main area inside into thirds. It's not huge but it's not at the opposite end of being too small to be at all useful. Currently this purse contains: my makeup bag, a 8\"L x 4\"Wx 1.5\"D wallet, car keys, a d-ring with all my other keys, altoids, perfume rollerball, pepper spray, and an extra hair tie. Like I said before, I carry a lot of stuff with me in my purse!", "review_title": "Not too big, not too small, but just right", "timestamp": 1469158292000}]

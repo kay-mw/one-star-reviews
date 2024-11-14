@@ -6,7 +6,8 @@ JSON format.
 <EVALUATION-CRITERIA>
 
 Familiarise yourself with the below criteria, which you will use to generate an
-overall quality rating ("score") ranging from 0-10.
+overall quality rating ("score"), which can be any integer greater than or equal
+to 0 and less than or equal to 10.
 
 Reviews should be evaluated based on:
 
@@ -28,132 +29,10 @@ Reviews should be evaluated based on:
      not say "the manufacturing was complete garbage".
 
 3. How relevant the review is.
+
    - A perfect review will be highly relevant to the product, meaning you could
      not copy the review to a completely different product and have it still
      make sense.
-
-<EVALUATION-EXAMPLES>
-
-# Positive Reviews
-
-### High Quality Example
-
-```
-{
-  "rating": 5.0,
-  "title": "A superb amateur telescope",
-  "review_text": "This is not only the ideal scope for beginners but enough of
-  an instrument to show you new things in the sky for years to come. It is sturdy
-  and simple to operate. It has enough light-gathering power (more important than
-  magnification) to reveal dim star clusters, nebulae, and galaxies and good
-  enough optics to show you the surface of planets like Jupiter, Saturn, and
-  Mars. Dobsonians like this one give by far the most view for the dollar, and
-  the price on this one is great. Affordable as this scope is, there is no reason
-  to give so much as a glance at the numerous poor quality 60mm refractors with
-  exaggerated magnification claims. Some advice on selection. Dobsonians come in
-  a range of sizes. A 114mm (4 ½') is a bit on the small side but still a fine
-  instrument, especially if your ability to carry large objects is limited. A
-  150-200mm (6-8') scope like this one is right in the middle of the recommended
-  range. A 250mm (10') is on the big side, and you should buy one only if you are
-  able-bodied. A very useful bonus is a full-sized 9x50mm finder scope. If
-  competing models offer only a 6x30mm finder, you should factor in the cost of
-  upgrading to the far better 50mm size. You will need eyepieces. Plossl-type
-  eyepieces are good yet affordable: start with a 32mm and a 7 or 8mm.",
-  "timestamp": 1170389642000,
-  "product_title": "StarHopper 8"
-}
-```
-
-This review would score a 10/10.
-
-- Detail: provides a detailed assessment of every key detail one would look for
-  when purchasing a telescope, including some useful buyers information
-  recarding sizes and eyepieces. Explains and justifies their claims.
-- Objectivity: focuses on the product, not their personal thoughts or feelings.
-  States things like "This is... the ideal scope for beginners", as opposed to
-  "I LOVE IT!" or "IT'S MY FAVOURITE!"
-- Relevance: perfect relevance, with a deep focus on telescopes - specifically
-  low price point beginner telescopes. You could not apply this review to any
-  product outside of this category.
-
-### Low Quality Example
-
-```
-{
-  "rating": 5.0,
-  "title": "Great",
-  "review_text": "Great",
-  "timestamp": 1573310431862,
-  "product_title": "Hypafix Retention Tape 2' X 10 Yard Roll Each"
-}
-```
-
-This review would score a 0/10.
-
-- Detail: this review provides no relevant detail; just says "Great" and nothing
-  else.
-- Objectivity: no objectivity, just a personal statement about how the reviewer
-  feels: "Great".
-- Relevance: no relevance to the product. This review could be applied to any
-  product on Amazon.
-
-# Negative Reviews
-
-### High Quality Example
-
-```
-{
-   "rating": 1.0,
-   "title": "Unknown chemicals, no COA, no lots, no QC",
-   "review_text": "I ordered Tianeptine sulfate from Nootropic source. The material
-   is qualitatively different from what I've ordered from other sources. It’s a
-   dense, free flowing powder instead of very light, fluffy powder. Second,
-   Tianeptine sulfate is soluble in Dimethylsulfoxide at concentrations > 500mg/mL,
-   with a faint purple color depending on the degree of hydration in the crystals.
-   N.S. product had insolubles at 250mg/mL and was faint yellow. The melting point
-   was very broad and significantly different from my reference compound indicating
-   an impure, likely different compound. They don’t put lot numbers on their
-   chemicals so there’s no way to trace it to a COA or any kind of internal
-   testing. Very sloppy QC, I wouldn’t put something like this in my body.",
-   "timestamp": 1588687728923,
-   "product_title": "Tianeptine Sulfate Capsules"
-}
-```
-
-This review would score a 10/10.
-
-- Detail: an almost scientific level of detail regarding specific measurements,
-  quantities, and experiments, with fantastic justifications for the relevance
-  of these factors.
-- Objectivity: perfectly objective. The review discusses nothing other than the
-  quality of the product, as measured by experiments and unbiased quantitative
-  testing.
-- Relevance: incredibly relevant. It is abundantly clear the reviewer is talking
-  specifically about Tianeptine sulfate, you could not apply this to any other
-  product.
-
-### Low Quality Review
-
-```
-{
-   "rating": 1.0,
-   "title": "BAD!!",
-   "review_text": "BAD!! SO BAD!! DO NOT BUY!!!",
-   "timestamp": 1381841877000,
-   "product_title": "Aioneus iPhone Charger Cable 2M, MFi Certified Lightning Cable
-   Fast Charging iPhone Cable Lead Nylon Lightning to USB Cable for iPhone 14 13 12
-   11 Pro Max XS XR X 8 7 6 Plus 5 SE"
-}
-```
-
-This review would score a 0/10.
-
-- Detail: no detail at all. Just ad-hominem attacks towards the product with
-  zero justification, reasoning, or explanation.
-- Objectivity: the antithesis of objectivity. Emotive language, a manic tone,
-  and a complete lack of any unbiased analysis of the products
-  benefits/shortcomings.
-- Relevance: zero relevance. The review could be applied to any product.
 
 <INSTRUCTIONS>
 
@@ -170,5 +49,15 @@ The schema of the review data attached to this prompt is as follows:
 - "timestamp": the unique identifier of each review. (INTEGER)
 - "rating": the star rating of the review, ranging from 1-5. (FLOAT)
 - "product_title": the title of the product being reviewed. (STRING)
+
+<OUTPUT-SCHEMA>
+
+The schema of your output should be as follows:
+
+`[{"timestamp": <timestamp: int>, "score": <score: int>}]`
+
+Where `<timestamp: int>` is the timestamp for that review, from the input data,
+and `<score: int>` your score/rating/evaluation of that review based on the
+previously described criteria.
 
 <REVIEW-DATA>

@@ -61,9 +61,13 @@ def prep_data() -> Dataset:
     output_data = read_lines("./data/output_examples.json")
 
     examples = []
+
+    with open("../prompt.md") as file:
+        prompt = file.read()
+
     for input_line, output_line in zip(input_data, output_data):
         example = {
-            "instruction": "Score the following product reviews. Output only a JSON array containing timestamp and score pairs.",
+            "instruction": f"{prompt}",
             "input": f"{input_line}",
             "output": f"{output_line}",
         }
@@ -102,15 +106,13 @@ trainer = SFTTrainer(
     processing_class=tokenizer,
     train_dataset=dataset,
     args=SFTConfig(
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
-        warmup_steps=5,
-        num_train_epochs=2,
-        dataset_text_field="text",
-        max_seq_length=max_seq_length,
-        dataset_num_proc=2,
-        packing=False,
-        learning_rate=2e-4,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=2,
+        warmup_steps=2,
+        num_train_epochs=1,
+        learning_rate=2e-5,
+        # evaluation_strategy="steps",
+        # eval_steps=10,
         fp16=not is_bfloat16_supported(),
         bf16=is_bfloat16_supported(),
         logging_steps=1,
@@ -119,6 +121,10 @@ trainer = SFTTrainer(
         lr_scheduler_type="linear",
         seed=1,
         output_dir="outputs",
+        dataset_text_field="text",
+        max_seq_length=max_seq_length,
+        dataset_num_proc=2,
+        packing=False,
     ),
 )
 
@@ -128,9 +134,7 @@ model.save_pretrained("lora_model")
 tokenizer.save_pretrained("lora_model")
 
 model.save_pretrained_gguf(
-    f"{strftime("%H-%M", gmtime())}-model",
-    # "15-06-model",
+    f"review-model",
     tokenizer,
     maximum_memory_usage=0.2,
-    # save_method="merged_16bit",
 )
