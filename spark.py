@@ -13,8 +13,10 @@ from dotenv import load_dotenv
 from google.api_core import exceptions
 from pyspark import StorageLevel
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import broadcast, col, rand
+from pyspark.sql.functions import broadcast, col
 from pyspark.sql.types import *
+
+# NOTE: If I want this to work, I _could_ just start and stop Spark on each iteration...
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -99,34 +101,40 @@ def read_data(review_path: str, product_path: str, rows: int, slice_total: int, 
     logger.info(f"Processing {review_path}, {product_path}...")
     logger.info(f"Sample seed is {seed}.")
 
-    # Use a smaller number of partitions to reduce overhead
     review_df = (
         spark.read.schema(REVIEW_SCHEMA)
         .json(f"./review_data/{review_path}")
-        .drop("images")
+        .drop(
+            "images",
+        )
         .withColumnRenamed("title", "review_title")
         .withColumnRenamed("text", "review_text")
-        .coalesce(10)  # Adjust this number based on your data size
+        .repartition("parent_asin")
     )
 
     product_df = (
         spark.read.schema(PRODUCT_SCHEMA)
         .json(f"./product_data/{product_path}")
-        .drop("images", "videos")
+        .drop(
+            "images",
+            "videos",
+        )
         .withColumnRenamed("title", "product_title")
-        .coalesce(10)  # Adjust this number based on your data size
+        .repartition("parent_asin")
     )
 
-    # Use a broadcast join to reduce the amount of data that needs to be shuffled
-    if review_df.count() < product_df.count():
-        review_df = review_df.broadcast()
-    else:
-        product_df = product_df.broadcast()
-
     df = review_df.join(product_df, "parent_asin")
+    review_df.unpersist(True)
+    product_df.unpersist(True)
 
-    # Sample the data without requiring a full scan
-    sample = df.limit(rows * slice_total).orderBy(rand()).take(rows * slice_total)
+    row_target = rows * slice_total
+    frac = row_target / df.count()
+
+    sample = df.sample(fraction=frac, seed=seed)
+    logger.info(f"Sample row count is {sample.count()}.")
+
+    df.unpersist(True)
+    sample.unpersist(True)
 
     return sample
 

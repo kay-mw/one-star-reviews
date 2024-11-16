@@ -1,11 +1,15 @@
 import json
+import os
 
 from transformers import TextStreamer
 from unsloth import FastLanguageModel
 
-max_seq_length = 512
+max_seq_length = 256
 dtype = None
-load_in_4bit = True
+load_in_4bit = False
+
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name="review-model",
@@ -48,5 +52,4 @@ else:
 
 result_lines = result.splitlines()[2:-2]
 result_json = json.loads("".join(result_lines))
-
-result_json
+print(result_json)

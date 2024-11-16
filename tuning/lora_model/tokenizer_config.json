@@ -2050,7 +2050,7 @@
     }
   },
   "bos_token": "<|begin_of_text|>",
-  "chat_template": "{{ bos_token }}{{ 'Below is some review data. Score each of these product reviews by outputting a JSON array containing timestamp and score pairs.' }}{% for message in messages %}{% if message['role'] == 'user' %}{{ '\n\n### Instruction:\n' + message['content'] }}{% elif message['role'] == 'assistant' %}{{ '\n\n### Response:\n' + message['content'] + '<|end_of_text|>' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ '\n\n### Response:\n' }}{% endif %}",
+  "chat_template": "{{ bos_token }}{{ 'Below is an instruction that describes a task, paired with an input that provides further context.\nWrite a response that appropriately completes the request.' }}{% for message in messages %}{% if message['role'] == 'user' %}{{ '\n\n### Instruction:\n' + message['content'] }}{% elif message['role'] == 'assistant' %}{{ '\n\n### Response:\n' + message['content'] + '<|end_of_text|>' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}{% if add_generation_prompt %}{{ '\n\n### Response:\n' }}{% endif %}",
   "clean_up_tokenization_spaces": true,
   "eos_token": "<|end_of_text|>",
   "extra_special_tokens": {},

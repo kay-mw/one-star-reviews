@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import time
 from typing import List
 
@@ -73,21 +72,31 @@ training_data = []
 #         continue
 #
 
-for input_line, output_line in zip(input_data, output_data):
-    training_data.append(
-        {"text_input": input_line.strip(), "output": output_line.strip()}
-    )
+with open("prompt.md") as file:
+    prompt = file.read()
+
+    for input_line, output_line in zip(input_data, output_data):
+        training_data.append(
+            {
+                "text_input": prompt + "\n" + input_line.strip(),
+                "output": output_line.strip(),
+            }
+        )
 
 
 load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
+
+for model_info in genai.list_tuned_models():
+    print(model_info)
+
 base_model = "models/gemini-1.5-flash-001-tuning"
 
 operation = genai.create_tuned_model(
-    display_name="gemini-flash-tune-big",
+    display_name="gemini-flash-tune-eval",
     source_model=base_model,
-    epoch_count=5,
+    epoch_count=25,
     batch_size=4,
     learning_rate=0.001,
     training_data=training_data,

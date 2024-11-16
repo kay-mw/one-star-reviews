@@ -1,6 +1,5 @@
 import json
 import os
-from time import gmtime, strftime
 
 import torch
 from datasets import Dataset
@@ -19,12 +18,12 @@ os.environ["LLAMA_CPP_LIB"] = "./llama.cpp"
 
 max_seq_length = 512
 dtype = None
-load_in_4bit = True
+load_in_4bit = False
 r = 16
 lora_alpha = 16
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/Llama-3.2-3B-bnb-4bit",
+    model_name="unsloth/Llama-3.2-1B",
     max_seq_length=max_seq_length,
     dtype=dtype,
     load_in_4bit=load_in_4bit,
@@ -67,7 +66,7 @@ def prep_data() -> Dataset:
 
     for input_line, output_line in zip(input_data, output_data):
         example = {
-            "instruction": f"{prompt}",
+            "instruction": f"{prompt}\n",
             "input": f"{input_line}",
             "output": f"{output_line}",
         }
@@ -87,7 +86,8 @@ dataset = to_sharegpt(
 )
 dataset = standardize_sharegpt(dataset)
 
-chat_template = """Below is some review data. Score each of these product reviews by outputting a JSON array containing timestamp and score pairs.
+chat_template = """Below is an instruction that describes a task, paired with an input that provides further context.
+Write a response that appropriately completes the request.
 
 ### Instruction:
 {INPUT}
@@ -106,20 +106,18 @@ trainer = SFTTrainer(
     processing_class=tokenizer,
     train_dataset=dataset,
     args=SFTConfig(
-        per_device_train_batch_size=1,
+        per_device_train_batch_size=2,
         gradient_accumulation_steps=2,
-        warmup_steps=2,
+        warmup_steps=5,
         num_train_epochs=1,
         learning_rate=6e-5,
-        # evaluation_strategy="steps",
-        # eval_steps=10,
         fp16=not is_bfloat16_supported(),
         bf16=is_bfloat16_supported(),
         logging_steps=1,
         optim="adamw_8bit",
         weight_decay=0.01,
         lr_scheduler_type="linear",
-        seed=1,
+        seed=65789,
         output_dir="outputs",
         dataset_text_field="text",
         max_seq_length=max_seq_length,
@@ -136,5 +134,6 @@ tokenizer.save_pretrained("lora_model")
 model.save_pretrained_gguf(
     f"review-model",
     tokenizer,
+    quantization_method="f16",
     maximum_memory_usage=0.2,
 )

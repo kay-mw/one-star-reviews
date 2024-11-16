@@ -135,7 +135,7 @@ def prompt_model(
             input_ids,
             streamer=text_streamer,
             pad_token_id=tokenizer.eos_token_id,
-            max_new_tokens=300,
+            # max_new_tokens=300,
         )
 
         response = tokenizer.batch_decode(tensor_response)[0]
@@ -166,9 +166,9 @@ def prompt_model(
     if file.endswith("jsonl")
 ]
 
-open("prompt_examples.json", "w").close()
+# open("prompt_examples.json", "w").close()
 
-# model, tokenizer = prep_model(max_seq_length=512)
+model, tokenizer = prep_model(max_seq_length=512)
 for review_file, product_file in zip(review_files, product_files):
     t0 = time.time()
 
@@ -182,8 +182,8 @@ for review_file, product_file in zip(review_files, product_files):
     decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
 
     rows = 10
-    slice_total = 1
-    seed = 20
+    slice_total = 15
+    seed = 1
     df = read_data(
         review_path=f"{review_path}.jsonl",
         product_path=f"{product_path}.jsonl",
@@ -193,46 +193,46 @@ for review_file, product_file in zip(review_files, product_files):
         seed=seed,
     )
 
-    prompt_dict = df.select(
-        pl.col("product_title"),
-        pl.col("rating"),
-        pl.col("review_text"),
-        pl.col("review_title"),
-        pl.col("timestamp"),
-    ).to_dicts()
-    with open("prompt_examples.json", "a") as file:
-        file.write(json.dumps(prompt_dict) + "\n")
+    # prompt_dict = df.select(
+    #     pl.col("product_title"),
+    #     pl.col("rating"),
+    #     pl.col("review_text"),
+    #     pl.col("review_title"),
+    #     pl.col("timestamp"),
+    # ).to_dicts()
+    # with open("prompt_examples.json", "a") as file:
+    #     file.write(json.dumps(prompt_dict) + "\n")
+    #
+    slices = []
+    for i in range(slice_total):
+        slices.append(df.slice(offset=i * rows, length=rows))
 
-    # slices = []
-    # for i in range(slice_total):
-    #     slices.append(df.slice(offset=i * rows, length=rows))
-    #
-    # responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
-    # print("DONE!")
-    # time.sleep(60)
-    #
-    # response_dfs = []
-    # for response in responses:
-    #     if response is not None:
-    #         response_dfs.append(
-    #             pl.from_dicts(
-    #                 response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
-    #             )
-    #         )
-    #
-    # response_df = pl.concat(items=response_dfs)
-    # final_df = df.join(response_df, on="timestamp", how="inner")
-    #
-    # with pl.Config(set_fmt_str_lengths=500, tbl_rows=-1):
-    #     print(
-    #         final_df.select(
-    #             pl.col("rating"),
-    #             pl.col("review_title"),
-    #             pl.col("review_text"),
-    #             pl.col("score"),
-    #         )
-    #     )
-    #
+    responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
+    print("DONE!")
+    time.sleep(60)
+
+    response_dfs = []
+    for response in responses:
+        if response is not None:
+            response_dfs.append(
+                pl.from_dicts(
+                    response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
+                )
+            )
+
+    response_df = pl.concat(items=response_dfs)
+    final_df = df.join(response_df, on="timestamp", how="inner")
+
+    with pl.Config(set_fmt_str_lengths=500, tbl_rows=-1):
+        print(
+            final_df.select(
+                pl.col("rating"),
+                pl.col("review_title"),
+                pl.col("review_text"),
+                pl.col("score"),
+            )
+        )
+
     os.remove(f"{review_path}.jsonl")
     os.remove(f"{product_path}.jsonl")
 
