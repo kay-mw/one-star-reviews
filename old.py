@@ -144,6 +144,10 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
             logger.info(f"Rate limited. Waiting {n_seconds}s and retrying...")
             time.sleep(n_seconds)
             continue
+        except ValueError:
+            logger.info(f"Prompt was blocked. Skipping...")
+            print(prompt, "\n", response.prompt_feedback)
+            break
 
 
 async def main(
@@ -169,93 +173,100 @@ async def main(
     return responses, input_data
 
 
-review_files = sorted(os.listdir("./review_data/"))
-product_files = sorted(os.listdir("./product_data/"))
+for i in range(3):
+    review_files = os.listdir("./review_data/")
+    product_files = os.listdir("./product_data/")
 
-[os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
+    [
+        os.remove(f"./review_data/{file}")
+        for file in review_files
+        if file.endswith("jsonl")
+    ]
 
-[
-    os.remove(f"./product_data/{file}")
-    for file in product_files
-    if file.endswith("jsonl")
-]
+    [
+        os.remove(f"./product_data/{file}")
+        for file in product_files
+        if file.endswith("jsonl")
+    ]
 
-review_files = sorted(os.listdir("./review_data/"))
-product_files = sorted(os.listdir("./product_data/"))
+    review_files = sorted(os.listdir("./review_data/"))[6:]
+    product_files = sorted(os.listdir("./product_data/"))[6:]
 
-for review_file, product_file in zip(review_files, product_files):
-    t0 = time.time()
+    for review_file, product_file in zip(review_files, product_files):
+        t0 = time.time()
 
-    review_name = review_file.split(".")[0]
-    review_path = f"./review_data/{review_name}"
+        review_name = review_file.split(".")[0]
+        review_path = f"./review_data/{review_name}"
 
-    product_name = product_file.split(".")[0]
-    product_path = f"./product_data/{product_name}"
+        product_name = product_file.split(".")[0]
+        product_path = f"./product_data/{product_name}"
 
-    decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
-    decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
+        decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
+        decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
 
-    rows = 40
-    slice_total = 15
-    seed = 2
-    df = read_data(
-        review_path=f"{review_path}.jsonl",
-        product_path=f"{product_path}.jsonl",
-        slice_init=1000000,
-        rows=rows,
-        slice_total=slice_total,
-        seed=seed,
-    )
+        rows = 40
+        slice_total = 15
+        seed = 3 + i
+        df = read_data(
+            review_path=f"{review_path}.jsonl",
+            product_path=f"{product_path}.jsonl",
+            slice_init=1000000,
+            rows=rows,
+            slice_total=slice_total,
+            seed=seed,
+        )
 
-    slices = []
-    for i in range(slice_total):
-        if i == 0:
-            slices.append(df.slice(offset=i, length=rows))
-        else:
-            slices.append(df.slice(offset=i * rows, length=rows))
-
-    def get_or_create_eventloop():
-        try:
-            return asyncio.get_event_loop()
-        except RuntimeError as e:
-            if "There is no current event loop in thread" in str(e):
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                return asyncio.get_event_loop()
+        slices = []
+        for i in range(slice_total):
+            if i == 0:
+                slices.append(df.slice(offset=i, length=rows))
             else:
-                raise e
+                slices.append(df.slice(offset=i * rows, length=rows))
 
-    loop = get_or_create_eventloop()
-    responses, input_data = loop.run_until_complete(main(slices=slices))
-
-    response_dfs = []
-    for response in responses:
-        if response is not None:
+        def get_or_create_eventloop():
             try:
-                response_dfs.append(
-                    pl.from_dicts(
-                        response,
-                        schema={"timestamp": pl.UInt64, "evaluation": pl.UInt8},
+                return asyncio.get_event_loop()
+            except RuntimeError as e:
+                if "There is no current event loop in thread" in str(e):
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    return asyncio.get_event_loop()
+                else:
+                    raise e
+
+        loop = get_or_create_eventloop()
+        responses, input_data = loop.run_until_complete(main(slices=slices))
+
+        response_dfs = []
+        for response in responses:
+            if response is not None:
+                try:
+                    response_dfs.append(
+                        pl.from_dicts(
+                            response,
+                            schema={"timestamp": pl.UInt64, "evaluation": pl.UInt8},
+                        )
                     )
-                )
-            except TypeError:
-                logger.info("Failed to parse response schema. Skipping...")
+                except TypeError:
+                    logger.info("Failed to parse response schema. Skipping...")
 
-    response_df = pl.concat(items=response_dfs)
-    final_df = df.join(response_df.unique(), on="timestamp", how="inner")
+        response_df = pl.concat(items=response_dfs)
+        final_df = df.join(
+            response_df.unique(subset="timestamp"), on="timestamp", how="inner"
+        )
 
-    assert len(final_df) > 0, "No data present in final_df."
+        assert len(final_df) > 0, "No data present in final_df."
 
-    final_df.write_delta(target="./export/main/", mode="append")
+        final_df.write_delta(target="./export/main/", mode="append")
 
-    logger.info(
-        f"""Exported final_df. Relevant row counts were...
-    df: {len(df)}
-    response_df: {len(response_df)}
-    final_df: {len(final_df)}"""
-    )
+        logger.info(
+            f"""Exported final_df. Relevant row counts were...
+        df: {len(df)}
+        response_df: {len(response_df)}
+        final_df: {len(final_df)}"""
+        )
 
-    os.remove(f"{review_path}.jsonl")
-    os.remove(f"{product_path}.jsonl")
+        os.remove(f"{review_path}.jsonl")
+        os.remove(f"{product_path}.jsonl")
 
-    logger.info(f"Processing {review_name} took {time.time() - t0}s.")
+        logger.info(f"Processing {review_name} took {time.time() - t0}s.")

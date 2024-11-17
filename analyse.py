@@ -11,6 +11,20 @@ main_table = "delta_scan('./export/main/')"
 
 distinct_reviews = f"(SELECT DISTINCT(review_id) FROM {review_table})"
 
+
+def open_sql(name: str) -> str:
+    with open(f"./sql/{name}.sql", "r") as file:
+        return file.read()
+
+
+duckdb.sql(open_sql("select-star")).pl()
+
+duckdb.sql(open_sql("pct-eval")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-rating")).pl()
+
+duckdb.sql(open_sql("eval-stddev-by-rating")).pl()
+
 pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000)
 
 duckdb.sql(
