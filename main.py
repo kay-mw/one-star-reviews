@@ -1,19 +1,19 @@
-# TODO: Re-download that review file I deleted.
-# TODO: Extend training dataset for improved fine-tuning.
-
+import asyncio
 import gzip
 import json
 import logging
 import os
 import shutil
 import time
-from typing import List
+from typing import Any, List
 
-import polars as pl
-from transformers import TextStreamer
-from unsloth import FastLanguageModel
+import google.generativeai as genai
+import typing_extensions
+from dotenv import load_dotenv
+from google.api_core import exceptions
 
 os.environ["POLARS_MAX_THREADS"] = "6"
+import polars as pl
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -25,8 +25,8 @@ logging.basicConfig(
     datefmt="%m/%d/%Y %I:%M:%S",
 )
 
-review_files = sorted(os.listdir("./review_data/"))
-product_files = sorted(os.listdir("./product_data/"))
+load_dotenv()
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def decompress(file_path_no_ext: str, buffer_size: int) -> None:
@@ -91,161 +91,182 @@ def read_data(
     return sample_df
 
 
-def prep_model(max_seq_length: int, dtype=None, load_in_4bit=True):
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="./tuning/review-model/",
-        max_seq_length=max_seq_length,
-        dtype=dtype,
-        load_in_4bit=load_in_4bit,
-    )
-    FastLanguageModel.for_inference(model)
-
-    return model, tokenizer
+class Reviews(typing_extensions.TypedDict):
+    timestamp: int
+    score: int
 
 
-def prompt_model(
-    model,
-    tokenizer,
-    slices: List[pl.DataFrame],
-):
-    responses = []
-    for sliced_df in slices:
-        prompt_dict = sliced_df.select(
-            pl.col("product_title"),
-            pl.col("rating"),
-            pl.col("review_text"),
-            pl.col("review_title"),
-            pl.col("timestamp"),
-        ).to_dicts()
-
-        with open("prompt.md", "r") as file:
-            instruction = file.read()
-
-        prompt = instruction + json.dumps(prompt_dict)
-        messages = [{"role": "user", "content": prompt}]
-        print(messages)
-
-        input_ids = tokenizer.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            return_tensors="pt",
-        ).to("cuda")
-        text_streamer = TextStreamer(tokenizer, skip_prompt=True)
-        tensor_response = model.generate(
-            input_ids,
-            streamer=text_streamer,
-            pad_token_id=tokenizer.eos_token_id,
-            # max_new_tokens=300,
-        )
-
-        response = tokenizer.batch_decode(tensor_response)[0]
-        _, match, after = response.partition("### Response:")
-
-        if match:
-            result = match + after
+def get_model(name: str) -> str:
+    model_name = None
+    for model_info in genai.list_tuned_models():
+        model_name = model_info.name
+        if name in model_name:
+            return model_name
         else:
-            raise ValueError("Failed to parse response.")
-
-        result_lines = result.splitlines()[2:-2]
-        try:
-            result_json = json.loads("".join(result_lines))
-            responses.append(result_json)
-        except json.JSONDecodeError:
-            logger.info("Failed to parse response, skipping...")
-            responses.append(None)
             continue
 
-    return responses
+    assert model_name is not None, f"Failed to find model {name}."
+
+    return model_name
 
 
-[os.remove(f"./review_data/{file}") for file in review_files if file.endswith("jsonl")]
+async def async_analyse_reviews(data: str) -> List[dict] | None:
+    with open("./prompt.md", "r") as file:
+        prompt = file.read() + "\n\n" + data
 
-[
-    os.remove(f"./product_data/{file}")
-    for file in product_files
-    if file.endswith("jsonl")
-]
+        model_name = get_model(name="geminiflashtuneeval-xnyvrlc5qf2y")
 
-# open("prompt_examples.json", "w").close()
-
-model, tokenizer = prep_model(max_seq_length=512)
-for review_file, product_file in zip(review_files, product_files):
-    t0 = time.time()
-
-    review_name = review_file.split(".")[0]
-    review_path = f"./review_data/{review_name}"
-
-    product_name = product_file.split(".")[0]
-    product_path = f"./product_data/{product_name}"
-
-    decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
-    decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
-
-    rows = 10
-    slice_total = 15
-    seed = 1
-    df = read_data(
-        review_path=f"{review_path}.jsonl",
-        product_path=f"{product_path}.jsonl",
-        slice_init=1000000,
-        rows=rows,
-        slice_total=slice_total,
-        seed=seed,
-    )
-
-    # prompt_dict = df.select(
-    #     pl.col("product_title"),
-    #     pl.col("rating"),
-    #     pl.col("review_text"),
-    #     pl.col("review_title"),
-    #     pl.col("timestamp"),
-    # ).to_dicts()
-    # with open("prompt_examples.json", "a") as file:
-    #     file.write(json.dumps(prompt_dict) + "\n")
-    #
-    slices = []
-    for i in range(slice_total):
-        slices.append(df.slice(offset=i * rows, length=rows))
-
-    responses = prompt_model(model=model, tokenizer=tokenizer, slices=slices)
-    print("DONE!")
-    time.sleep(60)
-
-    response_dfs = []
-    for response in responses:
-        if response is not None:
-            response_dfs.append(
-                pl.from_dicts(
-                    response, schema={"timestamp": pl.UInt64, "score": pl.UInt8}
-                )
-            )
-
-    response_df = pl.concat(items=response_dfs)
-    final_df = df.join(response_df, on="timestamp", how="inner")
-
-    with pl.Config(set_fmt_str_lengths=500, tbl_rows=-1):
-        print(
-            final_df.select(
-                pl.col("rating"),
-                pl.col("review_title"),
-                pl.col("review_text"),
-                pl.col("score"),
-            )
+        model = genai.GenerativeModel(
+            model_name=model_name,
+            generation_config=genai.GenerationConfig(
+                response_mime_type="text/plain",
+                response_schema=list[Reviews],
+                # max_output_tokens=2000,
+            ),
         )
 
-    os.remove(f"{review_path}.jsonl")
-    os.remove(f"{product_path}.jsonl")
+    for _ in range(3):
+        try:
+            response = await model.generate_content_async(prompt)
+            line_list = response.text.splitlines()
+            valid_lines = [
+                line.replace("`", "").strip() for line in line_list if "{" in line
+            ]
+            valid_string = "".join(valid_lines)
+            response = json.loads(valid_string)
+            return response
+        except json.JSONDecodeError:
+            logger.info("Failed to parse response. Skipping...")
+            print(response.text)
+            break
+        except exceptions.ResourceExhausted:
+            n_seconds = 3
+            logger.info(f"Rate limited. Waiting {n_seconds}s and retrying...")
+            time.sleep(n_seconds)
+            continue
+        except ValueError:
+            logger.info(f"Prompt was blocked. Skipping...")
+            print(prompt, "\n", response.prompt_feedback)
+            break
 
-    # assert len(final_df) > 0, "No data present in final_df."
-    #
-    # # final_df.write_delta(target="./export/polars-delta/", mode="append")
-    #
-    # logger.info(
-    #     f"""Exported final_df. Relevant row counts were...
-    # df: {len(df)}
-    # response_df: {len(response_df)}
-    # final_df: {len(final_df)}"""
-    # )
-    #
 
-    logger.info(f"Processing {review_name} took {time.time() - t0}s.")
+async def main(
+    slices: List[pl.DataFrame],
+) -> tuple[List[List[dict | Any]], List[dict]]:
+    tasks = []
+    input_data = []
+    for sliced_df in slices:
+        prompt_dict = sliced_df.select(
+            pl.col("review_title"),
+            pl.col("review_text"),
+            pl.col("timestamp"),
+            pl.col("rating"),
+            pl.col("product_title"),
+        ).to_dicts()
+        data = json.dumps(prompt_dict)
+
+        task = asyncio.create_task(async_analyse_reviews(data=data))
+        tasks.append(task)
+        input_data.append(prompt_dict)
+
+    responses = await asyncio.gather(*tasks)
+    return responses, input_data
+
+
+for i in range(3):
+    review_files = os.listdir("./review_data/")
+    product_files = os.listdir("./product_data/")
+
+    [
+        os.remove(f"./review_data/{file}")
+        for file in review_files
+        if file.endswith("jsonl")
+    ]
+
+    [
+        os.remove(f"./product_data/{file}")
+        for file in product_files
+        if file.endswith("jsonl")
+    ]
+
+    review_files = sorted(os.listdir("./review_data/"))[6:]
+    product_files = sorted(os.listdir("./product_data/"))[6:]
+
+    for review_file, product_file in zip(review_files, product_files):
+        t0 = time.time()
+
+        review_name = review_file.split(".")[0]
+        review_path = f"./review_data/{review_name}"
+
+        product_name = product_file.split(".")[0]
+        product_path = f"./product_data/{product_name}"
+
+        decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
+        decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
+
+        rows = 40
+        slice_total = 15
+        seed = 3 + i
+        df = read_data(
+            review_path=f"{review_path}.jsonl",
+            product_path=f"{product_path}.jsonl",
+            slice_init=1000000,
+            rows=rows,
+            slice_total=slice_total,
+            seed=seed,
+        )
+
+        slices = []
+        for i in range(slice_total):
+            if i == 0:
+                slices.append(df.slice(offset=i, length=rows))
+            else:
+                slices.append(df.slice(offset=i * rows, length=rows))
+
+        def get_or_create_eventloop():
+            try:
+                return asyncio.get_event_loop()
+            except RuntimeError as e:
+                if "There is no current event loop in thread" in str(e):
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    return asyncio.get_event_loop()
+                else:
+                    raise e
+
+        loop = get_or_create_eventloop()
+        responses, input_data = loop.run_until_complete(main(slices=slices))
+
+        response_dfs = []
+        for response in responses:
+            if response is not None:
+                try:
+                    response_dfs.append(
+                        pl.from_dicts(
+                            response,
+                            schema={"timestamp": pl.UInt64, "evaluation": pl.UInt8},
+                        )
+                    )
+                except TypeError:
+                    logger.info("Failed to parse response schema. Skipping...")
+
+        response_df = pl.concat(items=response_dfs)
+        final_df = df.join(
+            response_df.unique(subset="timestamp"), on="timestamp", how="inner"
+        )
+
+        assert len(final_df) > 0, "No data present in final_df."
+
+        final_df.write_delta(target="./export/main/", mode="append")
+
+        logger.info(
+            f"""Exported final_df. Relevant row counts were...
+        df: {len(df)}
+        response_df: {len(response_df)}
+        final_df: {len(final_df)}"""
+        )
+
+        os.remove(f"{review_path}.jsonl")
+        os.remove(f"{product_path}.jsonl")
+
+        logger.info(f"Processing {review_name} took {time.time() - t0}s.")
