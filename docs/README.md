@@ -1,0 +1,6 @@
+![pct-eval](../media/pct-eval.png)
+![running-total.png](../media/running-total.png)
+![avg-eval-by-help](../media/avg_eval_by_help.png)
+![avg-eval-by-price](../media/avg_eval_by_price.png)
+![avg-eval-by-rating](../media/avg_eval_by_rating.png)
+![avg-eval-by-purchase](../media/avg_eval_by_purchase.png)

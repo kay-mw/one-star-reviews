@@ -7,7 +7,7 @@ WITH date_buckets AS (
 )
 
 SELECT
-  date_bucket,
+  CAST(date_bucket AS DATE) AS date_bucket,
   SUM(COUNT(*)) OVER(ORDER BY date_bucket) AS total_reviews
 FROM
   date_buckets

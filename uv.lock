@@ -15,6 +15,15 @@ wheels = [
 ]
 
 [[package]]
+name = "async-timeout"
+version = "5.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/ae/136395dfbfe00dfc94da3f3e136d0b13f394cba8f4841120e34226265780/async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3", size = 9274 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/ba/e2081de779ca30d473f21f5b30e0e737c438205440784c7dfc81efc2b029/async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c", size = 6233 },
+]
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.12.3"
 source = { registry = "https://pypi.org/simple" }
@@ -81,6 +90,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/67/e5e7e0cbfefc4ca79025238b43cdf8a2037854195b37d6417f3d0895c4c2/charset_normalizer-3.4.0-cp313-cp313-win32.whl", hash = "sha256:f19c1585933c82098c2a520f8ec1227f20e339e33aca8fa6f956f6691b784e67", size = 94973 },
     { url = "https://files.pythonhosted.org/packages/65/97/fc9bbc54ee13d33dc54a7fcf17b26368b18505500fc01e228c27b5222d80/charset_normalizer-3.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:707b82d19e65c9bd28b81dde95249b07bf9f5b90ebe1ef17d9b57473f8a64b7b", size = 102308 },
     { url = "https://files.pythonhosted.org/packages/bf/9b/08c0432272d77b04803958a4598a51e2a4b51c06640af8b8f0f908c18bf2/charset_normalizer-3.4.0-py3-none-any.whl", hash = "sha256:fe9f97feb71aa9896b81973a7bbada8c49501dc73e58a10fcef6663af95e5079", size = 49446 },
+]
+
+[[package]]
+name = "choreographer"
+version = "0.99.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/0e/70909ca81964b0348218d6a9403c0e223cdc1e101aae77a0aa64636e517e/choreographer-0.99.6.tar.gz", hash = "sha256:280d82c961cdb7f8539ae6fb50397a7f72507eb966210c98edac69a564acb34f", size = 22415 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/43/0bb8f1770c381c92c30c5b06799934502fb8d1573d91f97c2379f84a5c95/choreographer-0.99.6-py3-none-any.whl", hash = "sha256:8256485cae76669901bd3ab1ad6de886b9767d26ad4d13d3c030a50fb31a62d0", size = 20462 },
 ]
 
 [[package]]
@@ -321,6 +339,19 @@ wheels = [
 ]
 
 [[package]]
+name = "kaleido"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "async-timeout" },
+    { name = "choreographer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/95/da101d3223875ae891767e296b248a2e8a85f6063315ef0745e29d63ea1b/kaleido-0.4.2.tar.gz", hash = "sha256:1b3043290b443b6dda7eea3b0d08ae59232a707896a8a77f36a56611bf4e17c4", size = 3316804 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/ee/542496ca9dc2b4827889dae3966188619d06e4ed0f52746d2066c99bb5ba/kaleido-0.4.2-py3-none-any.whl", hash = "sha256:cc0ecb6f8c7e33fa1a49b3f15f182b80d9c5401cabde75e272239ce540fe5d82", size = 3822426 },
+]
+
+[[package]]
 name = "numpy"
 version = "2.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -368,6 +399,7 @@ dependencies = [
     { name = "deltalake" },
     { name = "duckdb" },
     { name = "google-generativeai" },
+    { name = "kaleido" },
     { name = "plotly" },
     { name = "polars" },
     { name = "pyspark" },
@@ -383,6 +415,7 @@ requires-dist = [
     { name = "deltalake", specifier = "==0.19.2" },
     { name = "duckdb", specifier = "==1.1.0" },
     { name = "google-generativeai", specifier = "==0.8.3" },
+    { name = "kaleido", specifier = "==0.4.2" },
     { name = "plotly", specifier = "==5.24.1" },
     { name = "polars", specifier = "==1.9.0" },
     { name = "pyspark", specifier = "==3.5.2" },

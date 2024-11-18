@@ -1,13 +1,10 @@
 from typing import Literal
 
 import duckdb
-import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 import polars as pl
 import statsmodels.api as sm
-from deltalake import DeltaTable
-from plotly.subplots import make_subplots
 
 review_table = "delta_scan('./export/delta-table/')"
 polars_table = "delta_scan('./export/polars-delta/')"
@@ -22,14 +19,12 @@ def open_sql(name: str) -> str:
 
 
 # NOTE: Exploratory analysis
-
 with pl.Config(tbl_cols=-1, tbl_rows=5):
     print(duckdb.sql(open_sql("select-star")).pl())
 
 duckdb.sql(open_sql("stddev-eval-by-rating")).pl()
 
 pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000)
-
 
 duckdb.sql(open_sql("avg-rating-by-month")).pl()
 
@@ -50,7 +45,6 @@ duckdb.sql(open_sql("avg-eval-by-month-year")).pl()
 duckdb.sql(open_sql("avg-eval-by-category")).pl()
 
 # NOTE: Regression
-
 regression_df = duckdb.sql(open_sql("eval-regression")).pl()
 X = regression_df.select(
     "rating",
@@ -64,9 +58,8 @@ X = sm.add_constant(X)
 model = sm.OLS(y, X).fit()
 print(model.summary())
 
+
 # NOTE: Correlations
-
-
 def calc_correlation(
     name: str, col_x: str, col_y: str, method: Literal["pearson"] | Literal["spearman"]
 ) -> float:
@@ -128,7 +121,6 @@ eval_purchase_pearson = calc_correlation(
 
 
 # NOTE: Plots
-
 pio.templates.default = "plotly_dark"
 pio.templates["plotly_dark"].layout
 
@@ -169,6 +161,7 @@ fig.update_layout(
     ],
 )
 fig.show()
+fig.write_image("../media/avg_eval_by_rating.png")
 
 
 avg_eval_by_purchase = duckdb.sql(open_sql("avg-eval-by-purchase")).pl()
@@ -203,6 +196,7 @@ fig.update_layout(
     ],
 )
 fig.show()
+fig.write_image("../media/avg_eval_by_purchase.png")
 
 
 avg_eval_by_price = duckdb.sql(open_sql("avg-eval-by-price")).pl()
@@ -241,6 +235,7 @@ fig.update_layout(
     ],
 )
 fig.show()
+fig.write_image("../media/avg_eval_by_price.png")
 
 
 avg_eval_by_help = duckdb.sql(open_sql("avg-eval-by-helpful")).pl()
@@ -279,6 +274,7 @@ fig.update_layout(
     ],
 )
 fig.show()
+fig.write_image("../media/avg_eval_by_help.png")
 
 pct_eval = duckdb.sql(open_sql("pct-eval")).pl()
 fig = go.Figure()
@@ -300,20 +296,19 @@ fig.update_layout(
     font=dict(size=15),
 )
 fig.show()
+fig.write_image("../media/pct-eval.png")
 
 running_total = duckdb.sql(open_sql("running-total-by-month-year")).pl()
 fig = go.Figure()
 fig.add_trace(
     go.Scatter(
-        x=running_total["date_bucket"],
-        y=running_total["total_reviews"],
+        x=running_total["date_bucket"].cast(pl.String),
+        y=running_total["total_reviews"].cast(pl.UInt32),
         line=dict(
             width=3,
         ),
     )
 )
-fig.update_xaxes()
-fig.update_yaxes()
 fig.update_layout(
     title="<b>Total No. of Reviews Over Time</b>",
     xaxis_title="<b>Date</b>",
@@ -321,9 +316,6 @@ fig.update_layout(
     font=dict(size=15),
 )
 fig.show()
+fig.write_image(file="../media/running-total.png")
 
-
-# TODO: Some extra, more exploratory graphs. Things like:
-# - Overall distribution of evaluations.
-# - Overall distribution of ratings.
-# - Cumulative sum of reviews by month+year.
+# TODO: Create plotting function to reduce repetition.
