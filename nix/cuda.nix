@@ -33,9 +33,10 @@
       # Original packages
       cudatoolkit
       python312
-      # Removed llama-cpp since we'll build from source
+
+      uv
       (python312.withPackages
-        (python-pkgs: with python-pkgs; [ pip ipython torch-bin ]))
+        (python-pkgs: with python-pkgs; [ ipython torch-bin ]))
     ];
   multiPkgs = pkgs: with pkgs; [ zlib glibc glibc.dev ];
   runScript = "bash";
@@ -49,7 +50,7 @@
     # Remove system llama.cpp from PATH
     export PATH=$(echo $PATH | tr ':' '\n' | grep -v "llama-cpp" | tr '\n' ':')
 
-    source ./tuning/.venv/bin/activate
+    source ./.venv/bin/activate
 
     zsh
   '';
