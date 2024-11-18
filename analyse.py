@@ -1,9 +1,12 @@
+from typing import Literal
+
 import duckdb
 import plotly.express as px
 import plotly.graph_objects as go
 import polars as pl
 from deltalake import DeltaTable
 from plotly.subplots import make_subplots
+from scipy.stats import pearsonr, spearmanr
 
 review_table = "delta_scan('./export/delta-table/')"
 polars_table = "delta_scan('./export/polars-delta/')"
@@ -17,15 +20,174 @@ def open_sql(name: str) -> str:
         return file.read()
 
 
-duckdb.sql(open_sql("select-star")).pl()
+with pl.Config(tbl_cols=-1, tbl_rows=5):
+    print(duckdb.sql(open_sql("select-star")).pl())
 
 duckdb.sql(open_sql("pct-eval")).pl()
 
 duckdb.sql(open_sql("avg-eval-by-rating")).pl()
 
-duckdb.sql(open_sql("eval-stddev-by-rating")).pl()
+duckdb.sql(open_sql("stddev-eval-by-rating")).pl()
 
 pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000)
+
+duckdb.sql(open_sql("avg-rating-by-month")).pl()
+
+duckdb.sql(open_sql("avg-rating-by-year")).pl()
+
+duckdb.sql(open_sql("avg-rating-by-month-year")).pl()
+
+duckdb.sql(open_sql("avg-rating-by-category")).pl()
+
+duckdb.sql(open_sql("avg-rating-by-purchase")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-month")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-year")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-month-year")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-category")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-helpful")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-purchase")).pl()
+
+duckdb.sql(open_sql("avg-eval-by-price")).pl()
+
+
+def calc_correlation(
+    name: str, col_x: str, col_y: str, method: Literal["pearson"] | Literal["spearman"]
+) -> tuple[pl.DataFrame]:
+    result = (
+        duckdb.sql(open_sql(name)).pl().select(pl.corr(col_x, col_y, method=method)),
+    )
+    return result
+
+
+print(
+    calc_correlation(
+        name="corr-eval-rating", col_x="rating", col_y="evaluation", method="spearman"
+    ),
+    calc_correlation(
+        name="corr-eval-rating", col_x="rating", col_y="evaluation", method="pearson"
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-price-eval",
+        col_x="price",
+        col_y="evaluation",
+        method="spearman",
+    ),
+    calc_correlation(
+        name="corr-price-eval",
+        col_x="price",
+        col_y="evaluation",
+        method="pearson",
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-help-eval",
+        col_x="helpful_vote",
+        col_y="evaluation",
+        method="spearman",
+    ),
+    calc_correlation(
+        name="corr-help-eval",
+        col_x="helpful_vote",
+        col_y="evaluation",
+        method="pearson",
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-eval-purchase",
+        col_x="verified_purchase_converted",
+        col_y="evaluation",
+        method="spearman",
+    ),
+    calc_correlation(
+        name="corr-eval-purchase",
+        col_x="verified_purchase_converted",
+        col_y="evaluation",
+        method="pearson",
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-avg-rating-eval",
+        col_x="average_rating",
+        col_y="evaluation",
+        method="spearman",
+    ),
+    calc_correlation(
+        name="corr-avg-rating-eval",
+        col_x="average_rating",
+        col_y="evaluation",
+        method="pearson",
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-eval-n-ratings",
+        col_x="rating_number",
+        col_y="evaluation",
+        method="spearman",
+    ),
+    calc_correlation(
+        name="corr-eval-n-ratings",
+        col_x="rating_number",
+        col_y="evaluation",
+        method="pearson",
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-eval-year", col_x="year", col_y="evaluation", method="spearman"
+    ),
+    calc_correlation(
+        name="corr-eval-year", col_x="year", col_y="evaluation", method="pearson"
+    ),
+)
+
+print(
+    calc_correlation(
+        name="corr-eval-month", col_x="month", col_y="evaluation", method="spearman"
+    ),
+    calc_correlation(
+        name="corr-eval-month", col_x="month", col_y="evaluation", method="pearson"
+    ),
+)
+
+
+duckdb.sql(f"""
+WITH date_buckets AS (
+  SELECT
+    DATE_TRUNC('year', TO_TIMESTAMP(timestamp / 1000)) AS date_bucket,
+    review_text,
+    evaluation
+  FROM
+    delta_scan('./export/main/')
+)
+SELECT *
+FROM date_buckets
+WHERE date_bucket <= '2004-01-01 00:00:00';
+""").pl()
+
+duckdb.sql(f"""SELECT user_id, COUNT(*) AS n_reviews, AVG(evaluation) AS average_evaluation
+FROM {main_table}
+GROUP BY user_id
+HAVING n_reviews >= 10
+ORDER BY average_evaluation DESC;""").pl()
+
 
 duckdb.sql(
     f"SELECT review_text, evaluation, timestamp FROM {main_table} WHERE evaluation = 8;"
