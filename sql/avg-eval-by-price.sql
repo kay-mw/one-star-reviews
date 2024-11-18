@@ -23,7 +23,8 @@ SELECT
     ELSE '2000.00-INFINITY'
   END AS price_category,
   AVG(evaluation) AS average_evaluation,
-  COUNT(*) AS n_evaluations
+  COUNT(*) AS n_evaluations,
+  STDDEV(evaluation) AS stddev_evaluation
 FROM
   delta_scan('./export/main')
 WHERE

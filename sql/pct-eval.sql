@@ -1,9 +1,9 @@
 SELECT
   evaluation,
-  ROUND(COUNT(*) / (
+  COUNT(*) / (
     SELECT COUNT(*) 
     FROM delta_scan('./export/main/')
-  ) * 100, 2) AS percentage
+  ) AS percentage
 FROM
   delta_scan('./export/main/')
 GROUP BY

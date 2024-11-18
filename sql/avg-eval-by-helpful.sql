@@ -15,7 +15,8 @@ SELECT
     ELSE '400-INFINITY'
   END AS helpful_vote_range,
   AVG(evaluation) AS average_evaluation,
-  COUNT(*) AS n_evaluations
+  COUNT(*) AS n_evaluations,
+  STDDEV(evaluation) AS stddev_evaluation
 FROM
   delta_scan('./export/main/')
 GROUP BY
