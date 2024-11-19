@@ -143,9 +143,9 @@ fig.add_trace(
 fig.update_yaxes(dtick=1, range=[0, 10])
 fig.update_xaxes(dtick=1)
 fig.update_layout(
-    title="<b>Review Evaluation (Avg.) by Review Star Rating</b>",
-    xaxis_title="Rating",
-    yaxis_title="Average Evaluation",
+    title="<b>Review Quality (Avg.) by Review Star Rating</b>",
+    xaxis_title="<b>Rating</b>",
+    yaxis_title="<b>Average Quality</b>",
     font=dict(size=15),
     annotations=[
         dict(
@@ -178,9 +178,9 @@ fig.add_trace(
 )
 fig.update_yaxes(dtick=1, range=[0, 10])
 fig.update_layout(
-    title="<b>Review Evaluation (Avg.) by Verified Purchase Status</b>",
+    title="<b>Review Quality (Avg.) by Verified Purchase Status</b>",
     xaxis_title="<b>Verified Purchase</b>",
-    yaxis_title="<b>Average Evaluation</b>",
+    yaxis_title="<b>Average Quality</b>",
     font=dict(size=15),
     annotations=[
         dict(
@@ -217,9 +217,9 @@ fig.add_trace(
 )
 fig.update_yaxes(dtick=1, range=[0, 10])
 fig.update_layout(
-    title="<b>Review Evaluation (Avg.) by Product Price Range</b>",
+    title="<b>Review Quality (Avg.) by Product Price Range</b>",
     xaxis_title="<b>Price ($USD)</b>",
-    yaxis_title="<b>Average Evaluation</b>",
+    yaxis_title="<b>Average Quality</b>",
     font=dict(size=15),
     annotations=[
         dict(
@@ -256,9 +256,9 @@ fig.add_trace(
 )
 fig.update_yaxes(dtick=1, range=[0, 10])
 fig.update_layout(
-    title="<b>Review Evaluation (Avg.) by Review Helpful Votes</b>",
+    title="<b>Review Quality (Avg.) by Review Helpful Votes</b>",
     xaxis_title="<b>Helpful Votes</b>",
-    yaxis_title="<b>Average Evaluation</b>",
+    yaxis_title="<b>Average Quality</b>",
     font=dict(size=15),
     annotations=[
         dict(
@@ -266,7 +266,7 @@ fig.update_layout(
             y=1,
             xref="paper",
             yref="paper",
-            text=f"<b>Pearson's R: {round(eval_help_pearson, 2)}</b>",
+            text=f"<b>Spearman's R: {round(eval_help_spearman, 2)}</b>",
             showarrow=False,
             align="center",
             font=dict(size=18),
@@ -290,8 +290,8 @@ fig.add_trace(
 fig.update_xaxes(dtick=1, range=[0, 10])
 fig.update_yaxes(tickformat=".2%")
 fig.update_layout(
-    title="<b>Percentage of Reviews at Each Evaluation</b>",
-    xaxis_title="<b>Evaluation</b>",
+    title="<b>Distribution of Review Quality</b>",
+    xaxis_title="<b>Quality</b>",
     yaxis_title="<b>Percentage</b>",
     font=dict(size=15),
 )
