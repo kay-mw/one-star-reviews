@@ -1,140 +1,75 @@
-# One Star Reviews
+# Unveiling the Nuances of Amazon Reviews
 
-Are more negative product reviews generally higher quality?
-[Some people](https://near.blog/read-the-one-star-reviews/) think so, to such a
-degree that they advise people to only read the 1\* reviews! This seems to make
-sense – the anger you experience from getting a defective product typically
-outweighs the satisfaction you get from a great deal. But is this _really_ true?
-Should you read the one star reviews? That's what this project will investigate.
+Amazon reviews are a ubiquitous feature of online shopping, guiding purchasing
+decisions for millions of consumers. However, the reliability and quality of
+these reviews can vary significantly. In navigating this jungle of product
+evaluations, [some people](https://near.blog/read-the-one-star-reviews/) have
+noticed a trend: more negative reviews tend to be higher quality.
+
+But is this actually true? To find out, I created this project – a deep-dive
+into a dataset of Amazon reviews, aiming to answer this question, uncover hidden
+patterns and insights, and hopefully equip consumers with the knowledge to
+navigate product feedback effectively along the way.
 
 # The Process
 
 ![flow-chart](../media/flow-chart.svg)
 
-The general process was as follows:
+To conduct this analysis, a large dataset of Amazon reviews from the
+[McAuley Lab](https://amazon-reviews-2023.github.io/main.html) were collected
+and preprocessed. This involved handling large datasets (up to 30GB each),
+complex data types (Map/Struct), and perfoming speed/memory optimizations in
+PySpark/Polars. Each review in the refined dataset were then given quality
+scores using a fine-tuned Large Language Model (LLM). This final dataset was
+then analyzed using correlation, regression, and visualizations to identify key
+trends and relationships.
 
-1. **Find some review data:** I settled on
-   [this dataset](https://amazon-reviews-2023.github.io/), which contained
-   ~100GB of Amazon review and product information.
-2. **Parse the data:** I used two methods for this: Polars and Pyspark. Both are
-   good depending on your environment (Spark for distributed compute, Polars for
-   a single-node).
-3. **Evaluate the reviews:** This involved manually labelling some review data,
-   then using this to fine-tune Gemini 1.5 Flash.
-4. **Analyze the final dataset:** You can see the results of this below...
+# Key Findings
 
-# The Results
-
-## Overview
-
-### Most Reviews Suck
-
-Before diving into the results, it's useful to get a general idea of how review
-quality was distributed.
-
-While manually labelling the data for fine-tuning, I quickly realized that
-**most reviews suck**. As you can see below, the vast majority (~90%) of reviews
-are below a 5/10 in terms of quality.
+- **Review Quality Distribution:** The analysis revealed a skewed distribution
+  of review quality, with a majority of reviews exhibiting average quality. This
+  highlights the importance of discerning high-quality reviews from the rest.
 
 ![pct-eval](../media/pct-eval.png)
 
-A huge swath of reviews were:
-
-> Great product!!
-
-> As expected
-
-> I bought this for my grandson... it hasn't arrived yet but I think he'll love
-> it!
-
-Whilst some of these reviews are sweet, they aren't particularly useful.
-
-The primary reason for this is effort. Writing a high-quality review takes time
-and energy that most people aren't willing to expend, as they don't see a big
-enough upside. This results in most reviews being short and simple: the average
-review was about 221 characters (±429), or 44 words long. Even when people _do_
-make an effort to write a long review, this is usually to express some personal
-love/anger towards the product, and not to express an objective analysis of its
-pros/cons.
-
-### A Review History of Amazon
-
-Nevertheless, a more expected result was the distribution of reviews over time.
-According to this graph, Amazon really began picking up steam in the mid-2010s.
-This closely matches the story told by Amazon stock prices, which show a similar
-slope (though not as steep):
-
-<div style="display: flex; flex-wrap: wrap;">
-   <div style="vertical-align: middle; width: 100%;">
-      <img style="vertical-align: middle; width: 49%;" src="../media/running-total.png" />
-      <img style="vertical-align: middle; width: 49%;" src="../media/amazon-stock.png" />
-   </div>
-<div>
-
-This is reassuring, as it suggests that the temporal distribution of reviews in
-the dataset are likely accurate.
-
-## Main Hypothesis
-
-Now to answer the actual question: are more negative reviews higher quality? Yes
-they are!
+- **Impact of Star Ratings:** A moderate correlation was observed between star
+  ratings and review quality. This supports the idea that more negative reviews
+  (3\* and below) tend to be superior to positive reviews (4\* and above).
 
 ![avg-eval-by-rating](../media/avg_eval_by_rating.png)
 
-There is a weak-to-moderate correlation here ($r=-0.27$), indicating that as
-star ratings increase, review quality tends to decrease.
-
-One surprising thing here is that 2* reviews are actually superior to 1*
-reviews, and 3* reviews aren't far off in quality from 1* reviews. So really,
-"read the <= 3* reviews" is better advice than "read the 1* reviews".
-
-## Other Insights
-
-### Verified Purchases
-
-There were a couple of other interesting findings. One that was particularly
-surprising was the effect of verified purchases:
+- **Verified Purchases:** Surpisingly, reviews marked as "Verified purchases"
+  were on average lower quality than "unverified" reviews. This contradicts the
+  common assumption that unverified reviews are lower quality, given they can be
+  easily botted or faked.
 
 ![avg-eval-by-purchase](../media/avg_eval_by_purchase.png)
 
-Reviews that **weren't** verified purchases were **better** than reviews that
-were! I'm not sure why this might be, the only explanation I can think of is
-botting: companies purchasing a bunch of fraudulent "verified" reviews to
-inflate the perceived quality of their products.
-
-### Helpful Votes
-
-Less suprisingly, the number of helpful votes a review has is a great predictor
-of review quality (the highest correlation overall)! However, it's important to
-note that there are very few reviews with 300-400+ helpful votes, so this could
-be a reflection of poor sample size.
+- **Helpful Votes:** In a more expected turn, the number of helpful votes a
+  review receives proved to be a strong indicator of its quality. Reviews with
+  more helpful votes were generally more informative and reliable.
 
 ![avg-eval-by-help](../media/avg_eval_by_help.png)
 
-### Price
-
-Another unsurprising one: higher priced items get better quality reviews. This
-checks out: if you spent a lot on an item, you're more emotionally invested in
-its quality, so you'll probably spend more time writing a detailed review.
+- **Price:** A weak correlation was found between product price and review
+  quality. While higher-priced items may attract more detailed reviews, price
+  alone is not a guarantee of review quality.
 
 ![avg-eval-by-price](../media/avg_eval_by_price.png)
 
-# Summary
+# Practical Implications
 
-Based on these insights, how should one modify their behaviour when reading
-Amazon reviews? Let's analyze this using Amazon's built in filtering
-functionality:
+These findings suggest that, when reading reviews, consumers should prioritize:
 
-- When choosing to sort by "Top reviews" or "Most recent", you should probably
-  choose "Top reviews". It's unclear what the "Top reviews" category does, but
-  my guess is that it sorts reviews by their number of helpful votes.
-- When filtering by "All reviewers" or "Verified purchase only", you should
-  select "All reviewers", as reviews marked as "verified purchases" tend to be
-  lower quality.
-- When filtering by star rating, you should choose anything 3\* or below. You
-  can also select the "critical reviews" option, but this seems to be based on
-  some AI sentiment analysis that isn't guaranteed to be accurate.
-- The rest of the options (product format, text/image/video) weren't analyzed as
-  part of this project. However, the "product format" filter seems useful if a
-  single product has multiple variations (different size, material, etc.), and
-  you're only interested in the reviews for one of the variations.
+- Negative/critical reviews (3\* and below).
+- Reviews with more helpful votes (especially those with 300+).
+- Reviews that **aren't** verified purchases.
+- Reviews for more expensive products.
+
+# Conclusion
+
+This project provides a data-driven perspective on the intricacies of Amazon
+reviews, empowering consumers to make informed purchasing decisions. By
+understanding the factors that influence review quality, consumers can
+effectively leverage product feedback to navigate the vast landscape of online
+shopping.

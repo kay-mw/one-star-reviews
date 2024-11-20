@@ -148,6 +148,9 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
             logger.info(f"Prompt was blocked. Skipping...")
             print(prompt, "\n", response.prompt_feedback)
             break
+        except exceptions.InternalServerError:
+            logger.info(f"Internal server error. Retrying...")
+            continue
 
 
 async def main(
@@ -173,7 +176,7 @@ async def main(
     return responses, input_data
 
 
-for i in range(3):
+for iteration in range(3):
     review_files = os.listdir("./review_data/")
     product_files = os.listdir("./product_data/")
 
@@ -189,11 +192,36 @@ for i in range(3):
         if file.endswith("jsonl")
     ]
 
-    review_files = sorted(os.listdir("./review_data/"))[6:]
-    product_files = sorted(os.listdir("./product_data/"))[6:]
+    review_files = sorted(os.listdir("./review_data/"))
+    product_files = sorted(os.listdir("./product_data/"))
 
     for review_file, product_file in zip(review_files, product_files):
         t0 = time.time()
+
+        if iteration == 0 and review_file in [
+            "All_Beauty.jsonl.gz",
+            "Amazon_Fashion.jsonl.gz",
+            "Appliances.jsonl.gz",
+            "Arts_Crafts_and_Sewing.jsonl.gz",
+            "Automotive.jsonl.gz",
+            "Baby_Products.jsonl.gz",
+            "Beauty_and_Personal_Care.jsonl.gz",
+            "Books.jsonl.gz",
+            "CDs_and_Vinyl.jsonl.gz",
+            "Cell_Phones_and_Accessories.jsonl.gz",
+            "Clothing_Shoes_and_Jewelry.jsonl.gz",
+            "Digital_Music.jsonl.gz",
+            "Electronics.jsonl.gz",
+            "Gift_Cards.jsonl.gz",
+            "Grocery_and_Gourmet_Food.jsonl.gz",
+            "Handmade_Products.jsonl.gz",
+            "Health_and_Household.jsonl.gz",
+            "Health_and_Personal_Care.jsonl.gz",
+        ]:
+            logger.info(
+                f"Skipping {review_file}, {product_file} on iteration {iteration}."
+            )
+            continue
 
         review_name = review_file.split(".")[0]
         review_path = f"./review_data/{review_name}"
@@ -206,7 +234,7 @@ for i in range(3):
 
         rows = 40
         slice_total = 15
-        seed = 3 + i
+        seed = 4 + iteration
         df = read_data(
             review_path=f"{review_path}.jsonl",
             product_path=f"{product_path}.jsonl",
