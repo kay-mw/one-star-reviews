@@ -1,3 +1,6 @@
+# TODO: Add the two 10/10 examples from the old prompt to the dataset (replacing two existing reviews).
+# TODO: Might be worth removing the rating field from the input data.
+
 import asyncio
 import gzip
 import json
@@ -41,10 +44,8 @@ def read_data(
     slice_init: int,
     rows: int,
     slice_total: int,
-    seed: int,
 ) -> pl.DataFrame:
     logger.info(f"Processing {review_path}, {product_path}...")
-    logger.info(f"Seed is {seed}.")
 
     lazy_review = (
         pl.scan_ndjson(
@@ -84,9 +85,7 @@ def read_data(
     )
 
     lazy_master = lazy_review.join(lazy_product, on="parent_asin", how="inner")
-    sample_df = lazy_master.collect(streaming=True).sample(
-        n=rows * slice_total, seed=seed
-    )
+    sample_df = lazy_master.collect(streaming=True).sample(n=rows * slice_total)
 
     return sample_df
 
@@ -198,30 +197,30 @@ for iteration in range(3):
     for review_file, product_file in zip(review_files, product_files):
         t0 = time.time()
 
-        if iteration == 0 and review_file in [
-            "All_Beauty.jsonl.gz",
-            "Amazon_Fashion.jsonl.gz",
-            "Appliances.jsonl.gz",
-            "Arts_Crafts_and_Sewing.jsonl.gz",
-            "Automotive.jsonl.gz",
-            "Baby_Products.jsonl.gz",
-            "Beauty_and_Personal_Care.jsonl.gz",
-            "Books.jsonl.gz",
-            "CDs_and_Vinyl.jsonl.gz",
-            "Cell_Phones_and_Accessories.jsonl.gz",
-            "Clothing_Shoes_and_Jewelry.jsonl.gz",
-            "Digital_Music.jsonl.gz",
-            "Electronics.jsonl.gz",
-            "Gift_Cards.jsonl.gz",
-            "Grocery_and_Gourmet_Food.jsonl.gz",
-            "Handmade_Products.jsonl.gz",
-            "Health_and_Household.jsonl.gz",
-            "Health_and_Personal_Care.jsonl.gz",
-        ]:
-            logger.info(
-                f"Skipping {review_file}, {product_file} on iteration {iteration}."
-            )
-            continue
+        # if iteration == 0 and review_file in [
+        #     "All_Beauty.jsonl.gz",
+        #     "Amazon_Fashion.jsonl.gz",
+        #     "Appliances.jsonl.gz",
+        #     "Arts_Crafts_and_Sewing.jsonl.gz",
+        #     "Automotive.jsonl.gz",
+        #     "Baby_Products.jsonl.gz",
+        #     "Beauty_and_Personal_Care.jsonl.gz",
+        #     "Books.jsonl.gz",
+        #     "CDs_and_Vinyl.jsonl.gz",
+        #     "Cell_Phones_and_Accessories.jsonl.gz",
+        #     "Clothing_Shoes_and_Jewelry.jsonl.gz",
+        #     "Digital_Music.jsonl.gz",
+        #     "Electronics.jsonl.gz",
+        #     "Gift_Cards.jsonl.gz",
+        #     "Grocery_and_Gourmet_Food.jsonl.gz",
+        #     "Handmade_Products.jsonl.gz",
+        #     "Health_and_Household.jsonl.gz",
+        #     "Health_and_Personal_Care.jsonl.gz",
+        # ]:
+        #     logger.info(
+        #         f"Skipping {review_file}, {product_file} on iteration {iteration}."
+        #     )
+        #     continue
 
         review_name = review_file.split(".")[0]
         review_path = f"./review_data/{review_name}"
@@ -229,19 +228,17 @@ for iteration in range(3):
         product_name = product_file.split(".")[0]
         product_path = f"./product_data/{product_name}"
 
-        decompress(file_path_no_ext=review_path, buffer_size=1 * 1000000)
-        decompress(file_path_no_ext=product_path, buffer_size=1 * 1000000)
+        decompress(file_path_no_ext=review_path, buffer_size=1 * 1_000_000)
+        decompress(file_path_no_ext=product_path, buffer_size=1 * 1_000_000)
 
         rows = 40
         slice_total = 15
-        seed = 4 + iteration
         df = read_data(
             review_path=f"{review_path}.jsonl",
             product_path=f"{product_path}.jsonl",
-            slice_init=1000000,
+            slice_init=2_000_000,
             rows=rows,
             slice_total=slice_total,
-            seed=seed,
         )
 
         slices = []

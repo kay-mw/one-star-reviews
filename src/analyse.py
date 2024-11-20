@@ -124,6 +124,35 @@ eval_purchase_pearson = calc_correlation(
 pio.templates.default = "plotly_dark"
 pio.templates["plotly_dark"].layout
 
+pct_eval_by_rating = duckdb.sql(open_sql("pct-eval-by-rating")).pl()
+fig = go.Figure()
+for rating in sorted(
+    pct_eval_by_rating.select("rating").unique().to_series().to_list()
+):
+    filtered_data = pct_eval_by_rating.filter(pl.col("rating") == rating)
+    fig.add_trace(
+        go.Scatter(
+            x=filtered_data["evaluation"],
+            y=filtered_data["percentage"],
+            line=dict(
+                width=3,
+            ),
+            name=str(rating),
+        )
+    )
+fig.update_xaxes(dtick=1, range=[0, 10])
+fig.update_yaxes(tickformat=".2%")
+fig.update_layout(
+    title="<b>Distribution of Review Quality by Star Rating</b>",
+    xaxis_title="<b>Quality</b>",
+    yaxis_title="<b>Percentage</b>",
+    font=dict(size=15),
+    legend=dict(title="<b>Star Rating</b>"),
+)
+fig.show()
+fig.write_image("../media/pct-eval-by-rating.png")
+
+
 avg_eval_by_rating = duckdb.sql(open_sql("avg-eval-by-rating")).pl()
 fig = go.Figure()
 fig.add_trace(

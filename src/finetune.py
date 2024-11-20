@@ -17,8 +17,8 @@ def read_lines(path: str) -> List[str]:
         return lines
 
 
-input_data = read_lines("./tuning/data/input_examples.json")
-output_data = read_lines("./tuning/data/output_examples.json")
+input_data = read_lines("./data/input_examples.json")
+output_data = read_lines("./data/output_examples.json")
 training_data = []
 
 # for i in range(0, len(input_data) - 3, 3):
