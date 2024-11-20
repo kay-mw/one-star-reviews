@@ -22,6 +22,7 @@ def open_sql(name: str) -> str:
 with pl.Config(tbl_cols=-1, tbl_rows=5):
     print(duckdb.sql(open_sql("select-star")).pl())
 
+
 duckdb.sql(open_sql("stddev-eval-by-rating")).pl()
 
 pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000)

@@ -45,8 +45,6 @@ The schema of the review data attached to this prompt is as follows:
 - `<review_title: string>`: the title of the review.
 - `<review_text: string>`: the actual contents/text of the review.
 - `<timestamp: int>`: the unique identifier of each review.
-- `<rating: float>`: the star rating the reviewer gave this product, ranging
-  from 1-5.
 - `<product_title: string>`: the title of the product being reviewed.
 
 # Output Schema
@@ -55,13 +53,8 @@ The schema of your output should be as follows:
 
 `[{"timestamp": <timestamp: int>, "evaluation": <evaluation: int>}]`
 
-Where `<timestamp: int>` is the timestamp for that review, from the input data,
-and `<evaluation: int>` your evaluation of that review based on the previously
-described criteria.
-
-# Note
-
-The "rating" field is not related to the "evaluation" field you must provide.
-Ignore the "rating" field when determining the "evaluation".
+Where `<timestamp: int>` is the timestamp for that review (from the input data),
+and `<evaluation: int>` is your evaluation of that review based on the
+previously described criteria.
 
 # Review Data

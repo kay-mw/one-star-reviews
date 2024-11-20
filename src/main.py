@@ -1,6 +1,3 @@
-# TODO: Add the two 10/10 examples from the old prompt to the dataset (replacing two existing reviews).
-# TODO: Might be worth removing the rating field from the input data.
-
 import asyncio
 import gzip
 import json
@@ -113,7 +110,7 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
     with open("./prompt.md", "r") as file:
         prompt = file.read() + "\n\n" + data
 
-        model_name = get_model(name="geminiflashtuneeval-xnyvrlc5qf2y")
+        model_name = get_model(name="geminiflashtuneeval-t0cn05q06vv9")
 
         model = genai.GenerativeModel(
             model_name=model_name,
@@ -162,7 +159,7 @@ async def main(
             pl.col("review_title"),
             pl.col("review_text"),
             pl.col("timestamp"),
-            pl.col("rating"),
+            # pl.col("rating"),
             pl.col("product_title"),
         ).to_dicts()
         data = json.dumps(prompt_dict)
