@@ -233,7 +233,7 @@ for iteration in range(3):
         df = read_data(
             review_path=f"{review_path}.jsonl",
             product_path=f"{product_path}.jsonl",
-            slice_init=2_000_000,
+            slice_init=1_500_000,
             rows=rows,
             slice_total=slice_total,
         )
