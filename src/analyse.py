@@ -1,6 +1,7 @@
-from typing import Literal
+from typing import List, Literal
 
 import duckdb
+import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 import polars as pl
@@ -48,16 +49,18 @@ duckdb.sql(open_sql("avg-eval-by-category")).pl()
 # NOTE: Regression
 regression_df = duckdb.sql(open_sql("eval-regression")).pl()
 X = regression_df.select(
+    "review_length",
     "rating",
     "verified_purchase_converted",
-    "helpful_vote",
-    # "average_rating",
     "price",
+    "helpful_vote",
 ).to_numpy()
 y = regression_df.select("evaluation").to_numpy()
 X = sm.add_constant(X)
 model = sm.OLS(y, X).fit()
 print(model.summary())
+
+print(model.summary().as_html())
 
 
 # NOTE: Correlations
@@ -70,6 +73,19 @@ def calc_correlation(
     result = result[0][0].item(0, 0)
     return result
 
+
+eval_length_spearman = calc_correlation(
+    name="corr-eval-length",
+    col_x="review_length",
+    col_y="evaluation",
+    method="spearman",
+)
+eval_length_pearson = calc_correlation(
+    name="corr-eval-length",
+    col_x="review_length",
+    col_y="evaluation",
+    method="pearson",
+)
 
 eval_rating_spearman = calc_correlation(
     name="corr-eval-rating", col_x="rating", col_y="evaluation", method="spearman"
@@ -125,22 +141,217 @@ eval_purchase_pearson = calc_correlation(
 pio.templates.default = "plotly_dark"
 pio.templates["plotly_dark"].layout
 
-pct_eval_by_rating = duckdb.sql(open_sql("pct-eval-by-rating")).pl()
-fig = go.Figure()
-for rating in sorted(
-    pct_eval_by_rating.select("rating").unique().to_series().to_list()
-):
-    filtered_data = pct_eval_by_rating.filter(pl.col("rating") == rating)
-    fig.add_trace(
-        go.Scatter(
-            x=filtered_data["evaluation"],
-            y=filtered_data["percentage"],
-            line=dict(
-                width=3,
-            ),
-            name=str(rating),
-        )
+
+def scatter(
+    data: pl.DataFrame,
+    x: str,
+    y: str,
+    z: str | None,
+    size: str | None,
+    label_x: str,
+    label_y: str,
+    label_z: str | None,
+    xrange: List[int | float] | None,
+    yrange: List[int | float] | None,
+    correlation: float,
+    xtick: int | None = None,
+    ytick: int | None = None,
+    outlier: bool = False,
+    outlier_text: str = "",
+) -> go.Figure:
+    fig = px.scatter(
+        data,
+        x=x,
+        y=y,
+        color=z,
+        size=size,
+        trendline="ols",
+        labels={
+            x: label_x,
+            y: label_y,
+            z: label_z,
+        },
     )
+    fig.update_xaxes(dtick=xtick, range=xrange)
+    fig.update_yaxes(dtick=ytick, range=yrange)
+    fig.update_layout(
+        title=f"<b>{label_x} by {label_y}</b>",
+        xaxis_title=f"<b>{label_x}</b>",
+        yaxis_title=f"<b>{label_y}</b>",
+        font=dict(size=15),
+        annotations=[
+            dict(
+                x=1,
+                y=1,
+                xref="paper",
+                yref="paper",
+                text=f"<b>Correlation Coefficient: {round(correlation, 2)}</b>",
+                showarrow=False,
+                align="center",
+                font=dict(size=18),
+            ),
+        ],
+    )
+    if outlier:
+        fig.update_layout(
+            annotations=[
+                dict(
+                    x=1,
+                    y=1,
+                    xref="paper",
+                    yref="paper",
+                    text=f"<b>Correlation Coefficient: {round(correlation, 2)}</b>",
+                    showarrow=False,
+                    align="center",
+                    font=dict(size=18),
+                ),
+                dict(
+                    x=1,
+                    y=0,
+                    xref="paper",
+                    yref="paper",
+                    text=f"<b>{outlier_text}</b>",
+                    showarrow=False,
+                    align="center",
+                    font=dict(size=18, color="red"),
+                ),
+            ]
+        )
+    return fig
+
+
+avg_eval_by_length = duckdb.sql(open_sql("avg-eval-by-length")).pl()
+fig = scatter(
+    data=avg_eval_by_length,
+    x="review_length",
+    y="average_evaluation",
+    z="n",
+    size=None,
+    label_x="Review Length (No. Characters)",
+    label_y="Review Quality (Avg.)",
+    label_z="No. Reviews",
+    xrange=[0, 3_000],
+    yrange=[0, 10],
+    xtick=250,
+    ytick=1,
+    correlation=eval_length_pearson,
+    outlier=True,
+    outlier_text="Outliers >3000 characters excluded",
+)
+fig.show()
+fig.write_image("../media/avg_eval_by_length.png")
+
+avg_eval_by_rating = duckdb.sql(open_sql("avg-eval-by-rating")).pl()
+fig = px.line(
+    avg_eval_by_rating,
+    x="rating",
+    y="average_evaluation",
+    error_y="stddev_evaluation",
+    markers=True,
+    labels={
+        "rating": "Star Rating",
+        "average_evaluation": "Review Quality (Avg.)",
+    },
+)
+fig.update_xaxes(dtick=1)
+fig.update_yaxes(dtick=1, range=[0, 10])
+fig.update_layout(
+    title="<b>Review Quality (Avg.) by Star Rating</b>",
+    xaxis_title="<b>Quality</b>",
+    yaxis_title="<b>Percentage</b>",
+    font=dict(size=15),
+    legend=dict(title="<b>Star Rating</b>"),
+    annotations=[
+        dict(
+            x=1,
+            y=1,
+            xref="paper",
+            yref="paper",
+            text=f"<b>Correlation Coefficient: {round(eval_rating_spearman, 2)}</b>",
+            showarrow=False,
+            align="center",
+            font=dict(size=18),
+        ),
+    ],
+)
+fig.show()
+fig.write_image("../media/avg_eval_by_rating.png")
+
+avg_eval_by_price = duckdb.sql(open_sql("avg-eval-by-price")).pl()
+fig = scatter(
+    data=avg_eval_by_price,
+    x="price",
+    y="average_evaluation",
+    z="n",
+    size=None,
+    label_x="Price ($USD)",
+    label_y="Review Quality (Avg.)",
+    label_z="No. Reviews",
+    xrange=[0, 2000],
+    yrange=[0, 10],
+    ytick=1,
+    correlation=eval_price_pearson,
+    outlier=True,
+    outlier_text="Outliers >$2000 excluded",
+)
+fig.show()
+fig.write_image("../media/avg_eval_by_price.png")
+
+avg_eval_by_help = duckdb.sql(open_sql("avg-eval-by-helpful")).pl()
+fig = scatter(
+    data=avg_eval_by_help,
+    x="helpful_vote",
+    y="average_evaluation",
+    z="n",
+    size="n",
+    label_x="Helpful Votes",
+    label_y="Review Quality (Avg.)",
+    label_z="No. Reviews",
+    xrange=[0, 1000],
+    yrange=[0, 10],
+    ytick=1,
+    correlation=eval_help_pearson,
+    outlier=True,
+    outlier_text="Outliers >1000 helpful votes excluded",
+)
+fig.show()
+fig.write_image("../media/avg_eval_by_help_true.png")
+
+
+avg_eval_by_help = duckdb.sql(open_sql("avg-eval-by-helpful")).pl()
+fig = scatter(
+    data=avg_eval_by_help,
+    x="helpful_vote",
+    y="average_evaluation",
+    z=None,
+    size=None,
+    label_x="Helpful Votes",
+    label_y="Review Quality (Avg.)",
+    label_z="No. Reviews",
+    xrange=[-50, 1000],
+    yrange=[-0.5, 10],
+    ytick=1,
+    correlation=eval_help_pearson,
+    outlier=True,
+    outlier_text="Outliers >1000 helpful votes excluded",
+)
+fig.show()
+fig.write_image("../media/avg_eval_by_help.png")
+
+
+pct_eval_by_rating = duckdb.sql(open_sql("pct-eval-by-rating")).pl()
+fig = px.line(
+    pct_eval_by_rating,
+    x="evaluation",
+    y="percentage",
+    color="rating",
+    markers=True,
+    labels={
+        "evaluation": "<b>Quality</b>",
+        "percentage": "<b>Percentage</b>",
+        "rating": "<b>Rating</b>",
+    },
+)
 fig.update_xaxes(dtick=1, range=[0, 10])
 fig.update_yaxes(tickformat=".2%")
 fig.update_layout(
@@ -151,60 +362,61 @@ fig.update_layout(
     legend=dict(title="<b>Star Rating</b>"),
 )
 fig.show()
-fig.write_image("../media/pct-eval-by-rating.png")
+fig.write_image("../media/pct_eval_by_rating.png")
 
-
-avg_eval_by_rating = duckdb.sql(open_sql("avg-eval-by-rating")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(
-        x=avg_eval_by_rating["rating"],
-        y=avg_eval_by_rating["average_evaluation"],
-        error_y=dict(
-            type="data",
-            array=avg_eval_by_rating["stddev_evaluation"],
-            color="rgba(99, 110, 250, 0.5)",
-        ),
-        line=dict(
-            width=3,
-        ),
-    )
+pct_eval_by_rating = duckdb.sql(open_sql("pct-eval")).pl()
+fig = px.line(
+    pct_eval_by_rating,
+    x="evaluation",
+    y="percentage",
+    markers=True,
+    labels={
+        "evaluation": "<b>Quality</b>",
+        "percentage": "<b>Percentage</b>",
+    },
 )
-fig.update_yaxes(dtick=1, range=[0, 10])
-fig.update_xaxes(dtick=1)
+fig.update_xaxes(dtick=1, range=[0, 10])
+fig.update_yaxes(tickformat=".2%")
 fig.update_layout(
-    title="<b>Review Quality (Avg.) by Review Star Rating</b>",
-    xaxis_title="<b>Rating</b>",
-    yaxis_title="<b>Average Quality</b>",
+    title="<b>Distribution of Review Quality by Star Rating</b>",
+    xaxis_title="<b>Quality</b>",
+    yaxis_title="<b>Percentage</b>",
     font=dict(size=15),
-    annotations=[
-        dict(
-            x=1,
-            y=1,
-            xref="paper",
-            yref="paper",
-            text=f"<b>Spearman's R: {round(eval_rating_spearman, 2)}</b>",
-            showarrow=False,
-            align="center",
-            font=dict(size=18),
-        )
-    ],
 )
 fig.show()
-fig.write_image("../media/avg_eval_by_rating.png")
+fig.write_image("../media/pct_eval.png")
+
+
+running_total = duckdb.sql(open_sql("running-total-by-month-year")).pl()
+running_total = running_total.with_columns(
+    pl.col("total_reviews").cast(pl.UInt32), pl.col("date_bucket").cast(pl.String)
+)
+fig = px.line(
+    running_total,
+    x="date_bucket",
+    y="total_reviews",
+)
+fig.update_layout(
+    title="<b>Total No. of Reviews Over Time</b>",
+    xaxis_title="<b>Date</b>",
+    yaxis_title="<b>Total Reviews</b>",
+    font=dict(size=15),
+)
+fig.show()
+fig.write_image(file="../media/running-total.png")
 
 
 avg_eval_by_purchase = duckdb.sql(open_sql("avg-eval-by-purchase")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Bar(
-        x=avg_eval_by_purchase["verified_purchase"],
-        y=avg_eval_by_purchase["average_evaluation"],
-        error_y=dict(
-            type="data",
-            array=avg_eval_by_purchase["stddev_evaluation"],
-        ),
-    )
+fig = px.bar(
+    avg_eval_by_purchase,
+    x="verified_purchase",
+    y="average_evaluation",
+    color="verified_purchase",
+    error_y="stddev_evaluation",
+    labels={
+        "verified_purchase": "Verified Purchase",
+        "average_evaluation": "Review Quality (Avg.)",
+    },
 )
 fig.update_yaxes(dtick=1, range=[0, 10])
 fig.update_layout(
@@ -218,7 +430,7 @@ fig.update_layout(
             y=1,
             xref="paper",
             yref="paper",
-            text=f"<b>Spearman's R: {round(eval_purchase_spearman, 2)}</b>",
+            text=f"<b>Correlation Coefficient: {round(eval_purchase_pearson, 2)}</b>",
             showarrow=False,
             align="center",
             font=dict(size=18),
@@ -228,124 +440,44 @@ fig.update_layout(
 fig.show()
 fig.write_image("../media/avg_eval_by_purchase.png")
 
-
-avg_eval_by_price = duckdb.sql(open_sql("avg-eval-by-price")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(
-        x=avg_eval_by_price["price_category"],
-        y=avg_eval_by_price["average_evaluation"],
-        error_y=dict(
-            type="data",
-            array=avg_eval_by_price["stddev_evaluation"],
-            color="rgba(99, 110, 250, 0.5)",
-        ),
-        line=dict(
-            width=3,
-        ),
-    )
-)
-fig.update_yaxes(dtick=1, range=[0, 10])
-fig.update_layout(
-    title="<b>Review Quality (Avg.) by Product Price Range</b>",
-    xaxis_title="<b>Price ($USD)</b>",
-    yaxis_title="<b>Average Quality</b>",
-    font=dict(size=15),
-    annotations=[
-        dict(
-            x=1,
-            y=1,
-            xref="paper",
-            yref="paper",
-            text=f"<b>Spearman's R: {round(eval_price_spearman, 2)}</b>",
-            showarrow=False,
-            align="center",
-            font=dict(size=18),
-        )
-    ],
-)
-fig.show()
-fig.write_image("../media/avg_eval_by_price.png")
-
-
-avg_eval_by_help = duckdb.sql(open_sql("avg-eval-by-helpful")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(
-        x=avg_eval_by_help["helpful_vote_range"],
-        y=avg_eval_by_help["average_evaluation"],
-        error_y=dict(
-            type="data",
-            array=avg_eval_by_help["stddev_evaluation"],
-            color="rgba(99, 110, 250, 0.5)",
-        ),
-        line=dict(
-            width=3,
-        ),
-    )
-)
-fig.update_yaxes(dtick=1, range=[0, 10])
-fig.update_layout(
-    title="<b>Review Quality (Avg.) by Review Helpful Votes</b>",
-    xaxis_title="<b>Helpful Votes</b>",
-    yaxis_title="<b>Average Quality</b>",
-    font=dict(size=15),
-    annotations=[
-        dict(
-            x=1,
-            y=1,
-            xref="paper",
-            yref="paper",
-            text=f"<b>Spearman's R: {round(eval_help_spearman, 2)}</b>",
-            showarrow=False,
-            align="center",
-            font=dict(size=18),
-        )
-    ],
-)
-fig.show()
-fig.write_image("../media/avg_eval_by_help.png")
-
-pct_eval = duckdb.sql(open_sql("pct-eval")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(
-        x=pct_eval["evaluation"],
-        y=pct_eval["percentage"],
-        line=dict(
-            width=3,
-        ),
-    )
+avg_eval_by_category = duckdb.sql(open_sql("avg-eval-by-category")).pl()
+fig = px.bar(
+    avg_eval_by_category,
+    y="main_category",
+    x="average_evaluation",
+    color="n",
+    orientation="h",
+    labels={
+        "main_category": "<b>Main Category</b>",
+        "average_evaluation": "<b>Review Quality</b>",
+        "n": "<b>No. Reviews</b>",
+    },
 )
 fig.update_xaxes(dtick=1, range=[0, 10])
-fig.update_yaxes(tickformat=".2%")
 fig.update_layout(
-    title="<b>Distribution of Review Quality</b>",
-    xaxis_title="<b>Quality</b>",
-    yaxis_title="<b>Percentage</b>",
-    font=dict(size=15),
+    title=f"<b>Review Quality by Main Category</b>",
+    xaxis_title=f"<b>Review Quality</b>",
+    yaxis_title=f"<b>Main Category</b>",
+    font=dict(size=7),
 )
 fig.show()
-fig.write_image("../media/pct-eval.png")
+fig.write_image("../media/avg_eval_by_category.png")
 
-running_total = duckdb.sql(open_sql("running-total-by-month-year")).pl()
-fig = go.Figure()
-fig.add_trace(
-    go.Scatter(
-        x=running_total["date_bucket"].cast(pl.String),
-        y=running_total["total_reviews"].cast(pl.UInt32),
-        line=dict(
-            width=3,
-        ),
-    )
-)
-fig.update_layout(
-    title="<b>Total No. of Reviews Over Time</b>",
-    xaxis_title="<b>Date</b>",
-    yaxis_title="<b>Total Reviews</b>",
-    font=dict(size=15),
-)
-fig.show()
-fig.write_image(file="../media/running-total.png")
+duckdb.sql(f"""
+SELECT
+    AVG(LEN(review_text)) AS average_price,
+    RANK() OVER(ORDER BY average_price DESC),
+    main_category
+FROM
+    {main_table}
+WHERE
+    price IS NOT NULL
+GROUP BY
+    main_category
+ORDER BY
+    average_price DESC;
+""").pl()
 
-# TODO: Create plotting function to reduce repetition.
+
+# TODO: Re-interpret helpful votes (non-significant with length included)
+# TODO: Maybe set up Github Pages to embed plots as SVGs?

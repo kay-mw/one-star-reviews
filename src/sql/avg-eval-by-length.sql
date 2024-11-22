@@ -1,10 +1,12 @@
 SELECT
-  helpful_vote,
+  LEN(review_text) AS review_length,
   AVG(evaluation) AS average_evaluation,
   COUNT(*) AS n
 FROM
   delta_scan('./export/main/')
 GROUP BY
-  helpful_vote
+  review_length
+HAVING
+  COUNT(*) > 1
 ORDER BY
-  helpful_vote;
+  review_length;
