@@ -90,15 +90,15 @@ Higher-priced items received better quality reviews:
 
 ![avg-eval-by-price](../media/avg_eval_by_price.png)
 
-This aligns with the hypothesis that greater financial investment motivates more
-thorough reviewing.
+This suggest that greater financial investment may motivate more thorough
+reviewing.
 
 # Surprising Findings
 
 ## Verified Purchase Status
 
-Unexpectedly, non-verified purchase reviews scored higher in quality (r =
--0.22):
+Unexpectedly, non-verified purchase reviews scored higher in quality
+($r = -0.22$):
 
 ![avg-eval-by-purchase](../media/avg_eval_by_purchase.png)
 
@@ -112,25 +112,46 @@ review quality:
 
 ![avg-eval-by-help](../media/avg_eval_by_help.png)
 
-This unexpected finding is likely due to issues with sample size, as the vast
-majority of reviews receive 0 helpful votes. This becomes clear when the plot is
-adjusted such that the sample size is reflected in the scatter point size:
+This unexpected finding is likely due to issues with sample size. The vast
+majority of reviews receive 0 helpful votes, which becomes clear when the plot
+is adjusted to reflect sample size as scatter point size:
 
 ![avg-eval-by-help-true](../media/avg_eval_by_help_true.png)
 
-You can barely even see most of the points!
+You can barely see most of the points above ~50 helpful votes!
 
 ### Regression
 
 Inputting all of the above variables into a regression model, we observe that
-they explain 12.4% of the variance in review quality. This is relatively low,
-which suggests that you shouldn't discard reviews just because they are low in
-price or high in rating – there are various other (unknown) factors that predict
-review quality to a greater degree.
+character count, rating, verified purchase status, price, and helpful votes
+explain about a third of the variance in review quality (32.8%). This is
+relatively low, which suggests that you shouldn't discard reviews just because
+they are short, low in price, or high in rating – there are various other
+factors not included in this model that predict review quality to a significant
+degree.
 
-<!--<details>-->
-<!--   <summary><b>Full Results</b></summary>-->
-<!--   <br />-->
+## Other Insights
+
+### Category
+
+Another interesting finding to consider is the effect of review category:
+
+![avg-eval-by-category](../media/avg_eval_by_category.png)
+
+For categories with a decent sample size, the "Gift Card" section seems to be
+the worst, and the "Computers" section seems to be the best!
+
+The "Gift Cards" placement makes sense: what can you really say about a Gift
+Card, other than "It works"?
+
+The "Computers" placement is partially explained by price, where "Computers" has
+the 6th highest average. Additionally, computers can be evaluated across
+multiple objective dimensions (performance, noise, price), in contrast to gift
+cards that only really have one dimension (did it work?)
+
+<details>
+   <summary><b>Full Results</b></summary>
+   <br />
 <table>
   <tr>
     <th>Dep. Variable:</th>
@@ -201,7 +222,7 @@ review quality to a greater degree.
     <td>3.193</td>
   </tr>
   <tr>
-    <th>Review Length</th>
+    <th>Review Length (N. Characters)</th>
     <td>0.0017</td>
     <td>1.28e-05</td>
     <td>133.144</td>
@@ -272,26 +293,7 @@ review quality to a greater degree.
     <td>2.71e+03</td>
   </tr>
 </table>
-<!--</details>-->
-
-## Other Insights
-
-### Category
-
-Another interesting finding to consider is the effect of review category:
-
-![avg-eval-by-category](../media/avg_eval_by_category.png)
-
-For categories with a decent sample size, the "Gift Card" section seems to be
-the worst, and the "Computers" section seems to be the best!
-
-The "Gift Cards" placement makes sense: what can you really say about a Gift
-Card, other than "It works"?
-
-The "Computers" placement is partially explained by price, where "Computers" has
-the 6th highest average. Additionally, computers can be evaluated across
-multiple objective dimensions (performance, noise, price), in contrast to gift
-cards that only really have one dimension (did it work?)
+</details>
 
 # Practical Recommendations
 
