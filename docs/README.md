@@ -20,11 +20,11 @@ The analysis pipeline consisted of four main stages:
 2. **Data Processing:** Developed two separate data processing pipelines
    tailored to the environment:
 
-   - Apache Spark: Built a distributed pipeline as part of a learning initiative
-     to understand its scalability for handling large datasets, even though the
-     setup was on a single machine.
-   - Polars: Created a separate single-node pipeline to optimize performance for
-     local processing, significantly reducing runtime for the same tasks.
+   - **Apache Spark:** Built a distributed pipeline as part of a learning
+     initiative to understand its scalability for handling large datasets, even
+     though the setup was on a single machine.
+   - **Polars:** Created a separate single-node pipeline to optimize performance
+     for local processing, significantly reducing runtime for the same tasks.
 
 3. **Review Quality Assessment**:
 
@@ -129,25 +129,6 @@ relatively low, which suggests that you shouldn't discard reviews just because
 they are short, low in price, or high in rating – there are various other
 factors not included in this model that predict review quality to a significant
 degree.
-
-## Other Insights
-
-### Category
-
-Another interesting finding to consider is the effect of review category:
-
-![avg-eval-by-category](../media/avg_eval_by_category.png)
-
-For categories with a decent sample size, the "Gift Card" section seems to be
-the worst, and the "Computers" section seems to be the best!
-
-The "Gift Cards" placement makes sense: what can you really say about a Gift
-Card, other than "It works"?
-
-The "Computers" placement is partially explained by price, where "Computers" has
-the 6th highest average. Additionally, computers can be evaluated across
-multiple objective dimensions (performance, noise, price), in contrast to gift
-cards that only really have one dimension (did it work?)
 
 <details>
    <summary><b>Full Results</b></summary>
@@ -294,6 +275,25 @@ cards that only really have one dimension (did it work?)
   </tr>
 </table>
 </details>
+
+## Other Insights
+
+### Category
+
+Another interesting finding to consider is the effect of review category:
+
+![avg-eval-by-category](../media/avg_eval_by_category.png)
+
+For categories with a decent sample size, the "Gift Card" section seems to be
+the worst, and the "Computers" section seems to be the best!
+
+The "Gift Cards" placement makes sense: what can you really say about a Gift
+Card, other than "It works"?
+
+The "Computers" placement is partially explained by price, where "Computers" has
+the 6th highest average. Additionally, computers can be evaluated across
+multiple objective dimensions (performance, noise, price), in contrast to gift
+cards that only really have one dimension (did it work?)
 
 # Practical Recommendations
 

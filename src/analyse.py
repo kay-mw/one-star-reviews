@@ -240,13 +240,13 @@ fig = scatter(
     label_x="Review Length (No. Characters)",
     label_y="Review Quality (Avg.)",
     label_z="No. Reviews",
-    xrange=[0, 3_000],
-    yrange=[0, 10],
+    xrange=[-50, 2_500],
+    yrange=[-0.5, 10],
     xtick=250,
     ytick=1,
     correlation=eval_length_pearson,
     outlier=True,
-    outlier_text="Outliers >3000 characters excluded",
+    outlier_text="Outliers >2500 characters excluded",
 )
 fig.show()
 fig.write_image("../media/avg_eval_by_length.png")
@@ -297,12 +297,12 @@ fig = scatter(
     label_x="Price ($USD)",
     label_y="Review Quality (Avg.)",
     label_z="No. Reviews",
-    xrange=[0, 2000],
-    yrange=[0, 10],
+    xrange=[-50, 1000],
+    yrange=[-0.5, 10],
     ytick=1,
     correlation=eval_price_pearson,
     outlier=True,
-    outlier_text="Outliers >$2000 excluded",
+    outlier_text="Outliers >$1000 excluded",
 )
 fig.show()
 fig.write_image("../media/avg_eval_by_price.png")
@@ -317,12 +317,12 @@ fig = scatter(
     label_x="Helpful Votes",
     label_y="Review Quality (Avg.)",
     label_z="No. Reviews",
-    xrange=[0, 1000],
-    yrange=[0, 10],
+    xrange=[-10, 400],
+    yrange=[-0.5, 10],
     ytick=1,
     correlation=eval_help_pearson,
     outlier=True,
-    outlier_text="Outliers >1000 helpful votes excluded",
+    outlier_text="Outliers >400 helpful votes excluded",
 )
 fig.show()
 fig.write_image("../media/avg_eval_by_help_true.png")
@@ -333,17 +333,17 @@ fig = scatter(
     data=avg_eval_by_help,
     x="helpful_vote",
     y="average_evaluation",
-    z=None,
+    z="n",
     size=None,
     label_x="Helpful Votes",
     label_y="Review Quality (Avg.)",
     label_z="No. Reviews",
-    xrange=[-50, 1000],
+    xrange=[-10, 400],
     yrange=[-0.5, 10],
     ytick=1,
     correlation=eval_help_pearson,
     outlier=True,
-    outlier_text="Outliers >1000 helpful votes excluded",
+    outlier_text="Outliers >400 helpful votes excluded",
 )
 fig.show()
 fig.write_image("../media/avg_eval_by_help.png")
@@ -362,8 +362,8 @@ fig = px.line(
         "rating": "<b>Rating</b>",
     },
 )
-fig.update_xaxes(dtick=1, range=[0, 10])
-fig.update_yaxes(tickformat=".2%")
+fig.update_xaxes(dtick=1, range=[-0.5, 10])
+fig.update_yaxes(tickformat=".2%", range=[-0.03, 0.35])
 fig.update_layout(
     title="<b>Distribution of Review Quality by Star Rating</b>",
     xaxis_title="<b>Quality</b>",
@@ -372,11 +372,12 @@ fig.update_layout(
     legend=dict(title="<b>Star Rating</b>"),
 )
 fig.show()
+
 fig.write_image("../media/pct_eval_by_rating.png")
 
-pct_eval_by_rating = duckdb.sql(open_sql("pct-eval")).pl()
+pct_eval = duckdb.sql(open_sql("pct-eval")).pl()
 fig = px.line(
-    pct_eval_by_rating,
+    pct_eval,
     x="evaluation",
     y="percentage",
     markers=True,
@@ -385,10 +386,10 @@ fig = px.line(
         "percentage": "<b>Percentage</b>",
     },
 )
-fig.update_xaxes(dtick=1, range=[0, 10])
-fig.update_yaxes(tickformat=".2%")
+fig.update_xaxes(dtick=1, range=[-0.5, 10])
+fig.update_yaxes(tickformat=".2%", range=[-0.03, 0.30])
 fig.update_layout(
-    title="<b>Distribution of Review Quality by Star Rating</b>",
+    title="<b>Distribution of Review Quality</b>",
     xaxis_title="<b>Quality</b>",
     yaxis_title="<b>Percentage</b>",
     font=dict(size=15),

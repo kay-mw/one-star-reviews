@@ -5,6 +5,8 @@ WITH data AS (
     COUNT(*) AS count_per_group
   FROM
     delta_scan('./export/main/')
+  WHERE
+    evaluation IS NOT NULL
   GROUP BY
     evaluation, rating
 ),

@@ -6,5 +6,7 @@ SELECT
   ) AS percentage
 FROM
   delta_scan('./export/main/')
+WHERE
+  evaluation IS NOT NULL
 GROUP BY
   evaluation;

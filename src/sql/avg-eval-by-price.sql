@@ -1,5 +1,5 @@
 SELECT 
-    ROUND(price / 4) * 4 AS price,
+    ROUND(price / 2) * 2 AS price,
     AVG(evaluation) AS average_evaluation,
     COUNT(*) AS n
 FROM 
@@ -7,6 +7,6 @@ FROM
 WHERE
   price IS NOT NULL
 GROUP BY 
-  ROUND(price / 4) * 4
+  ROUND(price / 2) * 2
 ORDER BY 
   price;
