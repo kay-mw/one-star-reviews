@@ -9,6 +9,7 @@ review-model/
 outputs/
 archive/
 tuning/
+temp.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
