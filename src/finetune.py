@@ -17,8 +17,8 @@ def read_lines(path: str) -> List[str]:
         return lines
 
 
-input_data = read_lines("./data/input_examples.json")
-output_data = read_lines("./data/output_examples.json")
+input_data = read_lines("./data/new_input_examples.json")
+output_data = read_lines("./data/new_output_examples.json")
 training_data = []
 
 with open("prompt.md") as file:
@@ -42,9 +42,9 @@ for model_info in genai.list_tuned_models():
 base_model = "models/gemini-1.5-flash-001-tuning"
 
 operation = genai.create_tuned_model(
-    display_name="gemini-flash-tune-eval",
+    display_name="gemini-flash-tune-ordered",
     source_model=base_model,
-    epoch_count=20,
+    epoch_count=22,
     batch_size=4,
     learning_rate=0.001,
     training_data=training_data,
@@ -52,6 +52,9 @@ operation = genai.create_tuned_model(
 
 for status in operation.wait_bar():
     time.sleep(10)
+
+
+operation.metadata
 
 result = operation.result()
 

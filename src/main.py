@@ -110,7 +110,7 @@ async def async_analyse_reviews(data: str) -> List[dict] | None:
     with open("./prompt.md", "r") as file:
         prompt = file.read() + "\n\n" + data
 
-        model_name = get_model(name="geminiflashtuneeval-t0cn05q06vv9")
+        model_name = get_model(name="geminiflashtuneordered-s9fulltbj4")
 
         model = genai.GenerativeModel(
             model_name=model_name,
@@ -156,11 +156,10 @@ async def main(
     input_data = []
     for sliced_df in slices:
         prompt_dict = sliced_df.select(
+            pl.col("product_title"),
             pl.col("review_title"),
             pl.col("review_text"),
             pl.col("timestamp"),
-            # pl.col("rating"),
-            pl.col("product_title"),
         ).to_dicts()
         data = json.dumps(prompt_dict)
 
@@ -194,30 +193,30 @@ for iteration in range(3):
     for review_file, product_file in zip(review_files, product_files):
         t0 = time.time()
 
-        # if iteration == 0 and review_file in [
-        #     "All_Beauty.jsonl.gz",
-        #     "Amazon_Fashion.jsonl.gz",
-        #     "Appliances.jsonl.gz",
-        #     "Arts_Crafts_and_Sewing.jsonl.gz",
-        #     "Automotive.jsonl.gz",
-        #     "Baby_Products.jsonl.gz",
-        #     "Beauty_and_Personal_Care.jsonl.gz",
-        #     "Books.jsonl.gz",
-        #     "CDs_and_Vinyl.jsonl.gz",
-        #     "Cell_Phones_and_Accessories.jsonl.gz",
-        #     "Clothing_Shoes_and_Jewelry.jsonl.gz",
-        #     "Digital_Music.jsonl.gz",
-        #     "Electronics.jsonl.gz",
-        #     "Gift_Cards.jsonl.gz",
-        #     "Grocery_and_Gourmet_Food.jsonl.gz",
-        #     "Handmade_Products.jsonl.gz",
-        #     "Health_and_Household.jsonl.gz",
-        #     "Health_and_Personal_Care.jsonl.gz",
-        # ]:
-        #     logger.info(
-        #         f"Skipping {review_file}, {product_file} on iteration {iteration}."
-        #     )
-        #     continue
+        if iteration == 0 and review_file in [
+            "All_Beauty.jsonl.gz",
+            "Amazon_Fashion.jsonl.gz",
+            "Appliances.jsonl.gz",
+            #     "Arts_Crafts_and_Sewing.jsonl.gz",
+            #     "Automotive.jsonl.gz",
+            #     "Baby_Products.jsonl.gz",
+            #     "Beauty_and_Personal_Care.jsonl.gz",
+            #     "Books.jsonl.gz",
+            #     "CDs_and_Vinyl.jsonl.gz",
+            #     "Cell_Phones_and_Accessories.jsonl.gz",
+            #     "Clothing_Shoes_and_Jewelry.jsonl.gz",
+            #     "Digital_Music.jsonl.gz",
+            #     "Electronics.jsonl.gz",
+            #     "Gift_Cards.jsonl.gz",
+            #     "Grocery_and_Gourmet_Food.jsonl.gz",
+            #     "Handmade_Products.jsonl.gz",
+            #     "Health_and_Household.jsonl.gz",
+            #     "Health_and_Personal_Care.jsonl.gz",
+        ]:
+            logger.info(
+                f"Skipping {review_file}, {product_file} on iteration {iteration}."
+            )
+            continue
 
         review_name = review_file.split(".")[0]
         review_path = f"./review_data/{review_name}"
@@ -228,12 +227,12 @@ for iteration in range(3):
         decompress(file_path_no_ext=review_path, buffer_size=1 * 1_000_000)
         decompress(file_path_no_ext=product_path, buffer_size=1 * 1_000_000)
 
-        rows = 40
+        rows = 30
         slice_total = 15
         df = read_data(
             review_path=f"{review_path}.jsonl",
             product_path=f"{product_path}.jsonl",
-            slice_init=1_500_000,
+            slice_init=1_250_000,
             rows=rows,
             slice_total=slice_total,
         )

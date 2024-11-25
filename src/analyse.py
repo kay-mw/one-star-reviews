@@ -28,15 +28,9 @@ duckdb.sql(open_sql("stddev-eval-by-rating")).pl()
 
 pl.Config(tbl_rows=-1, set_fmt_str_lengths=10000)
 
-test = (
-    duckdb.sql(
-        f"""SELECT review_title, review_text, timestamp, product_title, main_category  FROM {main_table} WHERE evaluation = 8 AND timestamp = 1421512926000;"""
-    )
-    .pl()
-    .to_dicts()
-)
-
-print(test)
+duckdb.sql(
+    f"""SELECT review_text, evaluation FROM {main_table} WHERE evaluation = 0;"""
+).pl()
 
 duckdb.sql(open_sql("avg-rating-by-month")).pl()
 
