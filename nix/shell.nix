@@ -7,8 +7,6 @@ let
 
   pythonWithPkgs = myPython.withPackages (pythonPkgs:
     with pythonPkgs; [
-      ipython
-      pip
       debugpy
       setuptools
       virtualenvwrapper
@@ -19,8 +17,7 @@ let
   extraBuildInputs = with pythonPackages;
     [ ] ++ (with pkgs; [
       jdk # Pyspark
-      duckdb
-      google-cloud-sdk
+      uv
     ]);
 in import ./python-shell.nix {
   extraBuildInputs = extraBuildInputs;
