@@ -134,145 +134,146 @@ degree.
    <summary><b>Full Results</b></summary>
    <br />
 <table>
-  <tr>
-    <th>Dep. Variable:</th>
-    <td>Review Quality</td>
-    <th>R-squared:</th>
-    <td>0.328</td>
-  </tr>
-  <tr>
-    <th>Model:</th>
-    <td>OLS</td>
-    <th>Adj. R-squared:</th>
-    <td>0.328</td>
-  </tr>
-  <tr>
-    <th>Method:</th>
-    <td>Least Squares</td>
-    <th>F-statistic:</th>
-    <td>5703.</td>
-  </tr>
-  <tr>
-    <th>Prob (F-statistic):</th>
-    <td>0.00</td>
-    <th>Log-Likelihood:</th>
-    <td>-95890.</td>
-  </tr>
-  <tr>
-    <th>No. Observations:</th>
-    <td>58512</td>
-    <th>AIC:</th>
-    <td>1.918e+05</td>
-  </tr>
-  <tr>
-    <th>Df Residuals:</th>
-    <td>58506</td>
-    <th>BIC:</th>
-    <td>1.918e+05</td>
-  </tr>
-  <tr>
-    <th>Df Model:</th>
-    <td>5</td>
-    <th></th>
-    <td></td>
-  </tr>
-  <tr>
-    <th>Covariance Type:</th>
-    <td>nonrobust</td>
-    <th></th>
-    <td></td>
-  </tr>
+    <caption>OLS Regression Results</caption>
+    <tr>
+        <th>Dep. Variable:</th>
+        <td>Review Quality</td>
+        <th>R-squared:</th>
+        <td>0.420</td>
+    </tr>
+    <tr>
+        <th>Model:</th>
+        <td>OLS</td>
+        <th>Adj. R-squared:</th>
+        <td>0.420</td>
+    </tr>
+    <tr>
+        <th>Method:</th>
+        <td>Least Squares</td>
+        <th>F-statistic:</th>
+        <td>8190.</td>
+    </tr>
+    <tr>
+        <th>Prob (F-statistic):</th>
+        <td>0.00</td>
+        <th>Log-Likelihood:</th>
+        <td>-93814.</td>
+    </tr>
+    <tr>
+        <th>No. Observations:</th>
+        <td>56511</td>
+        <th>AIC:</th>
+        <td>1.876e+05</td>
+    </tr>
+    <tr>
+        <th>Df Residuals:</th>
+        <td>56505</td>
+        <th>BIC:</th>
+        <td>1.877e+05</td>
+    </tr>
+    <tr>
+        <th>Df Model:</th>
+        <td>5</td>
+        <th></th>
+        <td></td>
+    </tr>
+    <tr>
+        <th>Covariance Type:</th>
+        <td>nonrobust</td>
+        <th></th>
+        <td></td>
+    </tr>
 </table>
 <table>
-  <tr>
-    <td></td>
-    <th>coef</th>
-    <th>std err</th>
-    <th>t</th>
-    <th>P>|t|</th>
-    <th>[0.025</th>
-    <th>0.975]</th>
-  </tr>
-  <tr>
-    <th>const</th>
-    <td>3.1422</td>
-    <td>0.026</td>
-    <td>121.928</td>
-    <td>0.000</td>
-    <td>3.092</td>
-    <td>3.193</td>
-  </tr>
-  <tr>
-    <th>Review Length (N. Characters)</th>
-    <td>0.0017</td>
-    <td>1.28e-05</td>
-    <td>133.144</td>
-    <td>0.000</td>
-    <td>0.002</td>
-    <td>0.002</td>
-  </tr>
-  <tr>
-    <th>Rating</th>
-    <td>-0.2660</td>
-    <td>0.004</td>
-    <td>-61.913</td>
-    <td>0.000</td>
-    <td>-0.274</td>
-    <td>-0.258</td>
-  </tr>
-  <tr>
-    <th>Verified Purchase</th>
-    <td>-0.3443</td>
-    <td>0.018</td>
-    <td>-19.665</td>
-    <td>0.000</td>
-    <td>-0.379</td>
-    <td>-0.310</td>
-  </tr>
-  <tr>
-    <th>Price</th>
-    <td>0.0016</td>
-    <td>6.92e-05</td>
-    <td>22.530</td>
-    <td>0.000</td>
-    <td>0.001</td>
-    <td>0.002</td>
-  </tr>
-  <tr>
-    <th>Helpful Votes</th>
-    <td>0.0003</td>
-    <td>0.000</td>
-    <td>1.324</td>
-    <td>0.186</td>
-    <td>-0.000</td>
-    <td>0.001</td>
-  </tr>
+    <tr>
+        <td></td>
+        <th>coef</th>
+        <th>std err</th>
+        <th>t</th>
+        <th>P>|t|</th>
+        <th>[0.025</th>
+        <th>0.975]</th>
+    </tr>
+    <tr>
+        <th>const</th>
+        <td>3.6575</td>
+        <td>0.027</td>
+        <td>134.910</td>
+        <td>0.000</td>
+        <td>3.604</td>
+        <td>3.711</td>
+    </tr>
+    <tr>
+        <th>Length</th>
+        <td>0.0023</td>
+        <td>1.49e-05</td>
+        <td>155.178</td>
+        <td>0.000</td>
+        <td>0.002</td>
+        <td>0.002</td>
+    </tr>
+    <tr>
+        <th>Rating</th>
+        <td>-0.3807</td>
+        <td>0.004</td>
+        <td>-84.746</td>
+        <td>0.000</td>
+        <td>-0.389</td>
+        <td>-0.372</td>
+    </tr>
+    <tr>
+        <th>Verified Purchase</th>
+        <td>-0.2306</td>
+        <td>0.018</td>
+        <td>-12.483</td>
+        <td>0.000</td>
+        <td>-0.267</td>
+        <td>-0.194</td>
+    </tr>
+    <tr>
+        <th>Price</th>
+        <td>0.0013</td>
+        <td>6.97e-05</td>
+        <td>18.083</td>
+        <td>0.000</td>
+        <td>0.001</td>
+        <td>0.001</td>
+    </tr>
+    <tr>
+        <th>Helpful Votes</th>
+        <td>0.0010</td>
+        <td>0.001</td>
+        <td>1.844</td>
+        <td>0.065</td>
+        <td>-6.47e-05</td>
+        <td>0.002</td>
+    </tr>
 </table>
 <table>
-  <tr>
-    <th>Omnibus:</th>
-    <td>20205.267</td>
-    <th>Durbin-Watson:</th>
-    <td>1.759</td>
-  </tr>
-  <tr>
-    <th>Prob(Omnibus):</th>
-    <td>0.000</td>
-    <th>Jarque-Bera (JB):</th>
-    <td>925983.930</td>
-  </tr>
-  <tr>
-    <th>Skew:</th>
-    <td>-0.928</td>
-    <th>Prob(JB):</th>
-    <td>0.00</td>
-  </tr>
-  <tr>
-    <th>Kurtosis:</th>
-    <td>22.400</td>
-    <th>Cond. No.</th>
-    <td>2.71e+03</td>
-  </tr>
+    <tr>
+        <th>Omnibus:</th>
+        <td>10672.901</td>
+        <th>Durbin-Watson:</th>
+        <td>1.947</td>
+    </tr>
+    <tr>
+        <th>Prob(Omnibus):</th>
+        <td>0.000</td>
+        <th>Jarque-Bera (JB):</th>
+        <td>103098.649</td>
+    </tr>
+    <tr>
+        <th>Skew:</th>
+        <td>-0.631</td>
+        <th>Prob(JB):</th>
+        <td>0.00</td>
+    </tr>
+    <tr>
+        <th>Kurtosis:</th>
+        <td>9.496</td>
+        <th>Cond. No.</th>
+        <td>2.55e+03</td>
+    </tr>
 </table>
 </details>
 
