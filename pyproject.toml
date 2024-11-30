@@ -17,4 +17,5 @@ dependencies = [
   "google-generativeai==0.8.3",
   "statsmodels==0.14.4",
   "kaleido==0.4.2",
+  "ipython==8.29.0",
 ]

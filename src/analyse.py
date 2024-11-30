@@ -356,7 +356,7 @@ fig = px.line(
         "rating": "<b>Rating</b>",
     },
 )
-fig.update_xaxes(dtick=1, range=[-0.5, 10])
+fig.update_xaxes(dtick=1, range=[-0.5, 10.5])
 fig.update_yaxes(tickformat=".2%", range=[-0.03, 0.35])
 fig.update_layout(
     title="<b>Distribution of Review Quality by Star Rating</b>",
@@ -366,7 +366,6 @@ fig.update_layout(
     legend=dict(title="<b>Star Rating</b>"),
 )
 fig.show()
-
 fig.write_image("../media/pct_eval_by_rating.png")
 
 pct_eval = duckdb.sql(open_sql("pct-eval")).pl()
@@ -380,8 +379,8 @@ fig = px.line(
         "percentage": "<b>Percentage</b>",
     },
 )
-fig.update_xaxes(dtick=1, range=[-0.5, 10])
-fig.update_yaxes(tickformat=".2%", range=[-0.03, 0.30])
+fig.update_xaxes(dtick=1, range=[-0.5, 10.5])
+fig.update_yaxes(tickformat=".2%", range=[-0.03, 0.25])
 fig.update_layout(
     title="<b>Distribution of Review Quality</b>",
     xaxis_title="<b>Quality</b>",
@@ -470,7 +469,7 @@ fig.write_image("../media/avg_eval_by_category.png")
 
 duckdb.sql(f"""
 SELECT
-    AVG(LEN(review_text)) AS average_price,
+    AVG(price) AS average_price,
     RANK() OVER(ORDER BY average_price DESC),
     main_category
 FROM
@@ -482,7 +481,3 @@ GROUP BY
 ORDER BY
     average_price DESC;
 """).pl()
-
-
-# TODO: Re-interpret helpful votes (non-significant with length included)
-# TODO: Maybe set up Github Pages to embed plots as SVGs?

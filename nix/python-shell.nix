@@ -34,9 +34,6 @@ let
 
       # Setup the virtual environment if it doesn't already exist.
       VENV=.venv
-      if test ! -d $VENV; then
-        virtualenv $VENV
-      fi
       source ./$VENV/bin/activate
       export PYTHONPATH=$PYTHONPATH:`pwd`/$VENV/${myPython.sitePackages}/
 

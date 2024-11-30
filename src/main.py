@@ -29,10 +29,10 @@ load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
-def decompress(file_path_no_ext: str, buffer_size: int) -> None:
+def decompress(file_path_no_ext: str) -> None:
     with gzip.open(f"{file_path_no_ext}.jsonl.gz", "rb") as f_in:
         with open(f"{file_path_no_ext}.jsonl", "wb") as f_out:
-            shutil.copyfileobj(fsrc=f_in, fdst=f_out, length=buffer_size)
+            shutil.copyfileobj(fsrc=f_in, fdst=f_out)
 
 
 def read_data(
@@ -197,21 +197,27 @@ for iteration in range(3):
             "All_Beauty.jsonl.gz",
             "Amazon_Fashion.jsonl.gz",
             "Appliances.jsonl.gz",
-            #     "Arts_Crafts_and_Sewing.jsonl.gz",
-            #     "Automotive.jsonl.gz",
-            #     "Baby_Products.jsonl.gz",
-            #     "Beauty_and_Personal_Care.jsonl.gz",
-            #     "Books.jsonl.gz",
-            #     "CDs_and_Vinyl.jsonl.gz",
-            #     "Cell_Phones_and_Accessories.jsonl.gz",
-            #     "Clothing_Shoes_and_Jewelry.jsonl.gz",
-            #     "Digital_Music.jsonl.gz",
-            #     "Electronics.jsonl.gz",
-            #     "Gift_Cards.jsonl.gz",
-            #     "Grocery_and_Gourmet_Food.jsonl.gz",
-            #     "Handmade_Products.jsonl.gz",
-            #     "Health_and_Household.jsonl.gz",
-            #     "Health_and_Personal_Care.jsonl.gz",
+            "Arts_Crafts_and_Sewing.jsonl.gz",
+            "Automotive.jsonl.gz",
+            "Baby_Products.jsonl.gz",
+            "Beauty_and_Personal_Care.jsonl.gz",
+            "Books.jsonl.gz",
+            "CDs_and_Vinyl.jsonl.gz",
+            "Cell_Phones_and_Accessories.jsonl.gz",
+            "Clothing_Shoes_and_Jewelry.jsonl.gz",
+            "Digital_Music.jsonl.gz",
+            "Electronics.jsonl.gz",
+            "Gift_Cards.jsonl.gz",
+            "Grocery_and_Gourmet_Food.jsonl.gz",
+            "Handmade_Products.jsonl.gz",
+            "Health_and_Household.jsonl.gz",
+            "Health_and_Personal_Care.jsonl.gz",
+            "Home_and_Kitchen.jsonl.gz",
+            "Industrial_and_Scientific.jsonl.gz",
+            "Kindle_Store.jsonl.gz",
+            "Magazine_Subscriptions.jsonl.gz",
+            "Movies_and_TV.jsonl.gz",
+            "Musical_Instruments.jsonl.gz",
         ]:
             logger.info(
                 f"Skipping {review_file}, {product_file} on iteration {iteration}."
@@ -224,8 +230,8 @@ for iteration in range(3):
         product_name = product_file.split(".")[0]
         product_path = f"./product_data/{product_name}"
 
-        decompress(file_path_no_ext=review_path, buffer_size=1 * 1_000_000)
-        decompress(file_path_no_ext=product_path, buffer_size=1 * 1_000_000)
+        decompress(file_path_no_ext=review_path)
+        decompress(file_path_no_ext=product_path)
 
         rows = 30
         slice_total = 15
@@ -270,6 +276,10 @@ for iteration in range(3):
                     )
                 except TypeError:
                     logger.info("Failed to parse response schema. Skipping...")
+                    continue
+                except pl.exceptions.ComputeError:
+                    logger.info("Failed to parse response schema. Skipping...")
+                    continue
 
         response_df = pl.concat(items=response_dfs)
         final_df = df.join(
