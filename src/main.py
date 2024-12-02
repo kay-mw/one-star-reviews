@@ -193,32 +193,33 @@ for iteration in range(3):
     for review_file, product_file in zip(review_files, product_files):
         t0 = time.time()
 
-        if iteration == 0 and review_file in [
-            "All_Beauty.jsonl.gz",
-            "Amazon_Fashion.jsonl.gz",
-            "Appliances.jsonl.gz",
-            "Arts_Crafts_and_Sewing.jsonl.gz",
-            "Automotive.jsonl.gz",
-            "Baby_Products.jsonl.gz",
-            "Beauty_and_Personal_Care.jsonl.gz",
-            "Books.jsonl.gz",
-            "CDs_and_Vinyl.jsonl.gz",
-            "Cell_Phones_and_Accessories.jsonl.gz",
-            "Clothing_Shoes_and_Jewelry.jsonl.gz",
-            "Digital_Music.jsonl.gz",
-            "Electronics.jsonl.gz",
-            "Gift_Cards.jsonl.gz",
-            "Grocery_and_Gourmet_Food.jsonl.gz",
-            "Handmade_Products.jsonl.gz",
-            "Health_and_Household.jsonl.gz",
-            "Health_and_Personal_Care.jsonl.gz",
-            "Home_and_Kitchen.jsonl.gz",
-            "Industrial_and_Scientific.jsonl.gz",
-            "Kindle_Store.jsonl.gz",
-            "Magazine_Subscriptions.jsonl.gz",
-            "Movies_and_TV.jsonl.gz",
-            "Musical_Instruments.jsonl.gz",
-        ]:
+        if iteration == 0 and review_file != review_files[-1]:
+            # [
+            #     "All_Beauty.jsonl.gz",
+            #     "Amazon_Fashion.jsonl.gz",
+            #     "Appliances.jsonl.gz",
+            #     "Arts_Crafts_and_Sewing.jsonl.gz",
+            #     "Automotive.jsonl.gz",
+            #     "Baby_Products.jsonl.gz",
+            #     "Beauty_and_Personal_Care.jsonl.gz",
+            #     "Books.jsonl.gz",
+            #     "CDs_and_Vinyl.jsonl.gz",
+            #     "Cell_Phones_and_Accessories.jsonl.gz",
+            #     "Clothing_Shoes_and_Jewelry.jsonl.gz",
+            #     "Digital_Music.jsonl.gz",
+            #     "Electronics.jsonl.gz",
+            #     "Gift_Cards.jsonl.gz",
+            #     "Grocery_and_Gourmet_Food.jsonl.gz",
+            #     "Handmade_Products.jsonl.gz",
+            #     "Health_and_Household.jsonl.gz",
+            #     "Health_and_Personal_Care.jsonl.gz",
+            #     "Home_and_Kitchen.jsonl.gz",
+            #     "Industrial_and_Scientific.jsonl.gz",
+            #     "Kindle_Store.jsonl.gz",
+            #     "Magazine_Subscriptions.jsonl.gz",
+            #     "Movies_and_TV.jsonl.gz",
+            #     "Musical_Instruments.jsonl.gz",
+            # ]:
             logger.info(
                 f"Skipping {review_file}, {product_file} on iteration {iteration}."
             )
