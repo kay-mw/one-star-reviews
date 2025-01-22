@@ -193,15 +193,14 @@ for iteration in range(3):
     for review_file, product_file in zip(review_files, product_files):
         t0 = time.time()
 
-        if iteration == 0 and review_file != review_files[-1]:
-            # [
-            #     "All_Beauty.jsonl.gz",
-            #     "Amazon_Fashion.jsonl.gz",
-            #     "Appliances.jsonl.gz",
-            #     "Arts_Crafts_and_Sewing.jsonl.gz",
-            #     "Automotive.jsonl.gz",
-            #     "Baby_Products.jsonl.gz",
-            #     "Beauty_and_Personal_Care.jsonl.gz",
+        if iteration in [0, 1] and review_file not in [
+            "All_Beauty.jsonl.gz",
+            "Amazon_Fashion.jsonl.gz",
+            "Appliances.jsonl.gz",
+            "Arts_Crafts_and_Sewing.jsonl.gz",
+            "Automotive.jsonl.gz",
+            "Baby_Products.jsonl.gz",
+            "Beauty_and_Personal_Care.jsonl.gz",
             #     "Books.jsonl.gz",
             #     "CDs_and_Vinyl.jsonl.gz",
             #     "Cell_Phones_and_Accessories.jsonl.gz",
@@ -213,13 +212,13 @@ for iteration in range(3):
             #     "Handmade_Products.jsonl.gz",
             #     "Health_and_Household.jsonl.gz",
             #     "Health_and_Personal_Care.jsonl.gz",
-            #     "Home_and_Kitchen.jsonl.gz",
-            #     "Industrial_and_Scientific.jsonl.gz",
-            #     "Kindle_Store.jsonl.gz",
-            #     "Magazine_Subscriptions.jsonl.gz",
-            #     "Movies_and_TV.jsonl.gz",
-            #     "Musical_Instruments.jsonl.gz",
-            # ]:
+            #     #     "Home_and_Kitchen.jsonl.gz",
+            #     #     "Industrial_and_Scientific.jsonl.gz",
+            #     #     "Kindle_Store.jsonl.gz",
+            #     #     "Magazine_Subscriptions.jsonl.gz",
+            #     #     "Movies_and_TV.jsonl.gz",
+            #     #     "Musical_Instruments.jsonl.gz",
+        ]:
             logger.info(
                 f"Skipping {review_file}, {product_file} on iteration {iteration}."
             )
