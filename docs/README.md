@@ -44,13 +44,12 @@ The analysis pipeline consisted of four main stages:
 
 # PowerBI Dashboard
 
-To conveniently fview the dashboard design, use the PDF link. To get
-interactivity, click the "Dashboard File" link and press the "Download Raw"
-button, then open this file in PowerBI desktop.
+To conveniently view the dashboard design, use the PDF link. To view the
+dashboard with interactivity, click the "Download .pbix File" link, press the
+"Download" button, then open this file in PowerBI desktop.
 
 [View Dashboard PDF](../media/one-star-reviews.pdf)
 
 [Download .pbix File](https://www.dropbox.com/scl/fi/omwsoelh6q57ut1kmm8dx/one-star-reviews.pbix?rlkey=pp09wg37vu2iblrgsgc1lnt72&st=4w871h8x&dl=0)
-
 <sub>NOTE: Unfortunately, I cannot share this dashboard via a web link, as doing
 so requires an organizational email address.</sub>
