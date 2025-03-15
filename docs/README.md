@@ -40,16 +40,17 @@ The analysis pipeline consisted of four main stages:
      and edge cases
 
 4. **Analysis and Visulization**: Used PowerBI to analyze relationships between
-   review quality and various factors.
+   review quality and various review/product characteristics.
 
 # PowerBI Dashboard
 
 To conveniently fview the dashboard design, use the PDF link. To get
-interactivity download the file and open it in PowerBI desktop!
+interactivity, click the "Dashboard File" link and press the "Download Raw"
+button, then open this file in PowerBI desktop.
 
 [View Dashboard PDF](../media/one-star-reviews.pdf)
 
-[Download Dashboard](../media/one-star-reviews.pbix)
+[Download .pbix File](https://www.dropbox.com/scl/fi/omwsoelh6q57ut1kmm8dx/one-star-reviews.pbix?rlkey=pp09wg37vu2iblrgsgc1lnt72&st=4w871h8x&dl=0)
 
-<sub>NOTE: I cannot share this dashboard via a web link, as doing so requires an
-organizational email address (which I do not have).</sub>
+<sub>NOTE: Unfortunately, I cannot share this dashboard via a web link, as doing
+so requires an organizational email address.</sub>
